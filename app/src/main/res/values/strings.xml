@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">BluetoothTalk</string>
+
+
+    <string name="bluetooth_action">Bluetooth</string>
+    <string name="chat_action">Chat</string>
+    <string name="settings_action">Settings</string>
+</resources>
