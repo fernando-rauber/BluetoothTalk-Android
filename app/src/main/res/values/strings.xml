@@ -5,4 +5,10 @@
     <string name="bluetooth_action">Bluetooth</string>
     <string name="chat_action">Chat</string>
     <string name="settings_action">Settings</string>
+
+    <string name="scan_action">Scan</string>
+    <string name="cancel_action">Cancel</string>
+    <string name="connected">Connected</string>
+    <string name="my_devices">My Devices</string>
+    <string name="other_devices">Other Devices</string>
 </resources>

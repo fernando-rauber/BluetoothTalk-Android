@@ -20,8 +20,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import uk.fernando.bluetoothtalk.theme.blue
-import uk.fernando.bluetoothtalk.theme.green
-import uk.fernando.bluetoothtalk.theme.greyDark
 import uk.fernando.bluetoothtalk.theme.greySuperLight
 
 @Composable
