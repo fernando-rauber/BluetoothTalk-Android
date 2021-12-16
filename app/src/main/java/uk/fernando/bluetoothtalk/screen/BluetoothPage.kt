@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -18,9 +19,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import kotlinx.coroutines.launch
 import uk.fernando.bluetoothtalk.R
 import uk.fernando.bluetoothtalk.components.CustomSwitch
+import uk.fernando.bluetoothtalk.ext.checkLocationPermission
 import uk.fernando.bluetoothtalk.model.Device
+import uk.fernando.bluetoothtalk.navigation.Directions
 import uk.fernando.bluetoothtalk.theme.blueDark
 import uk.fernando.bluetoothtalk.theme.green
 import uk.fernando.bluetoothtalk.theme.grey
@@ -41,6 +45,7 @@ fun BluetoothPage(navController: NavController = NavController(LocalContext.curr
         if (viewModel.isBluetoothOn.value) {
 
             ScanButton(
+                navController = navController,
                 onClick = viewModel::scanForDevices,
                 isScanning = viewModel.isScanning.value
             )
@@ -61,7 +66,10 @@ fun BluetoothPage(navController: NavController = NavController(LocalContext.curr
 }
 
 @Composable
-private fun ScanButton(onClick: () -> Unit, isScanning: Boolean) {
+private fun ScanButton(navController: NavController, onClick: () -> Unit, isScanning: Boolean) {
+    val coroutine = rememberCoroutineScope()
+    val context = LocalContext.current
+
     Row {
         Spacer(
             modifier = Modifier
@@ -72,7 +80,15 @@ private fun ScanButton(onClick: () -> Unit, isScanning: Boolean) {
         TextButton(
             modifier = Modifier
                 .padding(top = 15.dp, end = 15.dp),
-            onClick = onClick
+            onClick = {
+                coroutine.launch {
+                    context.checkLocationPermission(
+                        onGranted = onClick,
+                        onNotGranted = {
+                            navController.navigate((Directions.locationPermission.name))
+                        })
+                }
+            }
         ) {
             Text(
                 text = (if (!isScanning) stringResource(id = R.string.scan_action) else stringResource(id = R.string.cancel_action)).uppercase(),

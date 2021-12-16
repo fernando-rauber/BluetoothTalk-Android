@@ -36,6 +36,13 @@ object Directions {
         override val arguments: List<NamedNavArgument>
             get() = emptyList()
     }
+
+    val locationPermission = object : NavigationCommand {
+        override val name: String
+            get() = "location_permission"
+        override val arguments: List<NamedNavArgument>
+            get() = emptyList()
+    }
 }
 
 
