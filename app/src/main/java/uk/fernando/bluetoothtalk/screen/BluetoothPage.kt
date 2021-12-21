@@ -10,11 +10,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -31,7 +31,6 @@ import uk.fernando.bluetoothtalk.theme.grey
 import uk.fernando.bluetoothtalk.theme.red
 import uk.fernando.bluetoothtalk.viewmodel.BluetoothViewModel
 
-@Preview(showBackground = true)
 @Composable
 fun BluetoothPage(navController: NavController = NavController(LocalContext.current), viewModel: BluetoothViewModel = hiltViewModel()) {
 
@@ -39,14 +38,14 @@ fun BluetoothPage(navController: NavController = NavController(LocalContext.curr
 
         CustomSwitch(modifier = Modifier.padding(top = 10.dp),
             text = R.string.bluetooth_action,
-            isChecked = viewModel.isBluetoothOn.value,
-            onCheckedChange = { viewModel.isBluetoothOn.value = it })
+            isChecked = viewModel.isBluetoothOn,
+            onCheckedChange = { viewModel.isBluetoothOn = it })
 
-        if (viewModel.isBluetoothOn.value) {
+        if (viewModel.isBluetoothOn) {
 
             ScanButton(
                 navController = navController,
-                onClick = viewModel::scanForDevices,
+                onClick = if (!viewModel.isScanning.value) viewModel::startScan else viewModel::cancelScan,
                 isScanning = viewModel.isScanning.value
             )
 
@@ -70,12 +69,16 @@ private fun ScanButton(navController: NavController, onClick: () -> Unit, isScan
     val coroutine = rememberCoroutineScope()
     val context = LocalContext.current
 
-    Row {
-        Spacer(
-            modifier = Modifier
-                .weight(1f)
-                .padding(top = 15.dp, end = 15.dp)
-        )
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Spacer(Modifier.weight(1f))
+
+        if (isScanning)
+            CircularProgressIndicator(
+                strokeWidth = 3.dp,
+                modifier = Modifier.size(30.dp)
+            )
+
+        Spacer(Modifier.weight(0.7f))
 
         TextButton(
             modifier = Modifier
