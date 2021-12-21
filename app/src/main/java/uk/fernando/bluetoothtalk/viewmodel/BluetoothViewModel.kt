@@ -6,8 +6,10 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.os.IBinder
 import android.util.Log
-import androidx.compose.runtime.*
-import androidx.lifecycle.LifecycleOwner
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,7 +19,6 @@ import uk.fernando.bluetoothtalk.BaseApplication
 import uk.fernando.bluetoothtalk.ext.TAG
 import uk.fernando.bluetoothtalk.model.Device
 import uk.fernando.bluetoothtalk.service.MyBleService
-import uk.fernando.bluetoothtalk.service.ServiceBinderLifecycleObserver
 import javax.inject.Inject
 
 
@@ -56,7 +57,7 @@ class BluetoothViewModel @Inject constructor(val context: BaseApplication) : Bas
                         isBluetoothOn = isOn
                     }
 
-                    it.isSearching.collect{ result ->
+                    it.isSearching.collect { result ->
                         isScanning.value = result
                     }
                 }
@@ -81,6 +82,11 @@ class BluetoothViewModel @Inject constructor(val context: BaseApplication) : Bas
     fun cancelScan() {
         service.value?.cancelSearch()
     }
+
+    fun enableBle() {
+        service.value?.enableBle()
+    }
+
     fun disableBle() {
         service.value?.disableBle()
     }

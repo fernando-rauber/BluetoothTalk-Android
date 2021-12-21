@@ -61,6 +61,10 @@ class MyBleService : LifecycleService() {
         isSearching.tryEmit(false)
     }
 
+    fun enableBle() {
+        if (bluetoothService?.adapter?.isEnabled == false)
+            bluetoothService?.adapter?.enable()
+    }
     fun disableBle() {
         if (bluetoothService?.adapter?.isEnabled == true)
             bluetoothService?.adapter?.disable()

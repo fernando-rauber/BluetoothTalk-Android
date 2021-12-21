@@ -1,10 +1,5 @@
 package uk.fernando.bluetoothtalk.screen
 
-import android.app.Activity
-import android.bluetooth.BluetoothAdapter
-import android.content.Intent
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -38,22 +33,14 @@ import uk.fernando.bluetoothtalk.viewmodel.BluetoothViewModel
 @Composable
 fun BluetoothPage(navController: NavController = NavController(LocalContext.current), viewModel: BluetoothViewModel = hiltViewModel()) {
 
-    val activityResult = rememberLauncherForActivityResult(contract = ActivityResultContracts.StartActivityForResult()) {
-        if (it.resultCode == Activity.RESULT_CANCELED) {
-            viewModel.isBluetoothOn = false
-        }
-    }
-
     Column(Modifier.fillMaxSize()) {
 
         CustomSwitch(modifier = Modifier.padding(top = 10.dp),
             text = R.string.bluetooth_action,
             isChecked = viewModel.isBluetoothOn,
             onCheckedChange = { isON ->
-                if (isON)
-                    activityResult.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
-                else
-                    viewModel.disableBle()
+                if (isON) viewModel.enableBle()
+                else viewModel.disableBle()
 
                 viewModel.isBluetoothOn = isON
             })
