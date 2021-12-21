@@ -61,6 +61,11 @@ class MyBleService : LifecycleService() {
         isSearching.tryEmit(false)
     }
 
+    fun disableBle() {
+        if (bluetoothService?.adapter?.isEnabled == true)
+            bluetoothService?.adapter?.disable()
+    }
+
     // Create a BroadcastReceiver for ACTION_FOUND.
     private val receiver = object : BroadcastReceiver() {
 

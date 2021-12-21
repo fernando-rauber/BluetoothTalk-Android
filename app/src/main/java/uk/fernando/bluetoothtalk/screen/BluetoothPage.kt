@@ -1,5 +1,10 @@
 package uk.fernando.bluetoothtalk.screen
 
+import android.app.Activity
+import android.bluetooth.BluetoothAdapter
+import android.content.Intent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -10,7 +15,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -34,12 +38,25 @@ import uk.fernando.bluetoothtalk.viewmodel.BluetoothViewModel
 @Composable
 fun BluetoothPage(navController: NavController = NavController(LocalContext.current), viewModel: BluetoothViewModel = hiltViewModel()) {
 
+    val activityResult = rememberLauncherForActivityResult(contract = ActivityResultContracts.StartActivityForResult()) {
+        if (it.resultCode == Activity.RESULT_CANCELED) {
+            viewModel.isBluetoothOn = false
+        }
+    }
+
     Column(Modifier.fillMaxSize()) {
 
         CustomSwitch(modifier = Modifier.padding(top = 10.dp),
             text = R.string.bluetooth_action,
             isChecked = viewModel.isBluetoothOn,
-            onCheckedChange = { viewModel.isBluetoothOn = it })
+            onCheckedChange = { isON ->
+                if (isON)
+                    activityResult.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
+                else
+                    viewModel.disableBle()
+
+                viewModel.isBluetoothOn = isON
+            })
 
         if (viewModel.isBluetoothOn) {
 
@@ -62,6 +79,8 @@ fun BluetoothPage(navController: NavController = NavController(LocalContext.curr
             )
         }
     }
+
+
 }
 
 @Composable

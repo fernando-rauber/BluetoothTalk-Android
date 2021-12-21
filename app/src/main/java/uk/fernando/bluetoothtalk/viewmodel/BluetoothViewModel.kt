@@ -81,5 +81,8 @@ class BluetoothViewModel @Inject constructor(val context: BaseApplication) : Bas
     fun cancelScan() {
         service.value?.cancelSearch()
     }
+    fun disableBle() {
+        service.value?.disableBle()
+    }
 
 }
