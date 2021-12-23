@@ -2,22 +2,22 @@ package uk.fernando.bluetoothtalk.service
 
 
 import android.app.Service
-import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
-import android.content.BroadcastReceiver
-import android.content.Context
+import android.bluetooth.le.*
 import android.content.Intent
-import android.content.IntentFilter
 import android.os.Binder
 import android.os.IBinder
 import androidx.core.content.getSystemService
 import androidx.lifecycle.LifecycleService
+import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.flow
-import uk.fernando.bluetoothtalk.model.Device
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
+import uk.fernando.bluetoothtalk.service.ble.BleScanState
+import uk.fernando.bluetoothtalk.service.ble.ChatServer
+import uk.fernando.bluetoothtalk.service.ble.MyBleManagerScan
+import java.util.*
 
 
 @AndroidEntryPoint
@@ -26,84 +26,41 @@ class MyBleService : LifecycleService() {
     private val binder = BleBinder()
     private var bluetoothService: BluetoothManager? = null
 
-    val otherDevices = MutableStateFlow<List<Device>>(emptyList())
-    val isSearching = MutableStateFlow(false)
+    private lateinit var bleScanner: MyBleManagerScan
+
+    val scanState = MutableStateFlow<BleScanState?>(null)
 
 
-    val isBluetoothOn: Flow<Boolean> = flow {
-        bluetoothService?.adapter?.isEnabled
-    }
-
-    fun getPairedDevices(): List<Device> {
-        return bluetoothService?.adapter?.bondedDevices?.map {
-            Device(it.name, it.address)
-        } ?: emptyList()
-    }
-
-    fun startSearch() {
-        val filter = IntentFilter()
-        filter.addAction(BluetoothDevice.ACTION_FOUND)
-        filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
-        filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED)
-
-        registerReceiver(receiver, filter)
-
-        if (bluetoothService?.adapter?.isDiscovering == true)
-            bluetoothService?.adapter?.cancelDiscovery()
-
-        bluetoothService?.adapter?.startDiscovery()
-    }
-
-    fun cancelSearch() {
-        if (bluetoothService?.adapter?.isDiscovering == true)
-            bluetoothService?.adapter?.cancelDiscovery()
-
-        isSearching.tryEmit(false)
-    }
-
-    fun enableBle() {
-        if (bluetoothService?.adapter?.isEnabled == false)
-            bluetoothService?.adapter?.enable()
-    }
-    fun disableBle() {
-        if (bluetoothService?.adapter?.isEnabled == true)
-            bluetoothService?.adapter?.disable()
-    }
-
-    // Create a BroadcastReceiver for ACTION_FOUND.
-    private val receiver = object : BroadcastReceiver() {
-
-        val list: HashMap<String, Device> = HashMap()
-
-        override fun onReceive(context: Context, intent: Intent) {
-            when (intent.action) {
-                BluetoothDevice.ACTION_FOUND -> {
-                    val device: BluetoothDevice? = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
-                    val deviceName = device?.name ?: ""
-                    val deviceAddress = device?.address // MAC address
-                    deviceAddress?.let {
-                        list[deviceAddress] = Device(deviceName, deviceAddress)
-                        otherDevices.tryEmit(list.values.toList())
-                    }
-                }
-                BluetoothAdapter.ACTION_DISCOVERY_STARTED -> {
-                    isSearching.tryEmit(true)
-                }
-                BluetoothAdapter.ACTION_DISCOVERY_FINISHED -> {
-                    isSearching.tryEmit(false)
-                }
+    private fun initBleScanner() {
+        lifecycleScope.launch {
+            bleScanner.scanState.collect {
+                scanState.value = it
             }
         }
     }
 
+    fun startScan() {
+        bleScanner.startScan()
+    }
+
+    fun enableDisableBle() {
+        if (bluetoothService?.adapter?.isEnabled == false)
+            bluetoothService?.adapter?.enable()
+        else
+            bluetoothService?.adapter?.disable()
+    }
+
     override fun onCreate() {
         super.onCreate()
-        bluetoothService = getSystemService<BluetoothManager>()
+        bluetoothService = getSystemService()
+        bleScanner = MyBleManagerScan(bluetoothService!!.adapter)
+        initBleScanner()
+        ChatServer.startServer(application)
     }
 
     override fun onDestroy() {
-        unregisterReceiver(receiver)
         super.onDestroy()
+        ChatServer.stopServer()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -112,7 +69,6 @@ class MyBleService : LifecycleService() {
 
     inner class BleBinder : Binder() {
 
-        // Return this instance of LocalService so clients can call public methods
         fun getService(): MyBleService = this@MyBleService
     }
 
@@ -120,5 +76,4 @@ class MyBleService : LifecycleService() {
         super.onBind(intent)
         return binder
     }
-
 }

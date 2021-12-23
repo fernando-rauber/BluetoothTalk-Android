@@ -1,10 +1,13 @@
 package uk.fernando.bluetoothtalk.screen
 
+import android.bluetooth.BluetoothDevice
+import android.content.Context.LOCATION_SERVICE
+import android.location.LocationManager
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
@@ -22,86 +25,108 @@ import kotlinx.coroutines.launch
 import uk.fernando.bluetoothtalk.R
 import uk.fernando.bluetoothtalk.components.CustomSwitch
 import uk.fernando.bluetoothtalk.ext.checkLocationPermission
-import uk.fernando.bluetoothtalk.model.Device
 import uk.fernando.bluetoothtalk.navigation.Directions
 import uk.fernando.bluetoothtalk.theme.blueDark
-import uk.fernando.bluetoothtalk.theme.green
-import uk.fernando.bluetoothtalk.theme.grey
-import uk.fernando.bluetoothtalk.theme.red
+import uk.fernando.bluetoothtalk.theme.greyDark
 import uk.fernando.bluetoothtalk.viewmodel.BluetoothViewModel
 
+
+@ExperimentalMaterialApi
 @Composable
 fun BluetoothPage(navController: NavController = NavController(LocalContext.current), viewModel: BluetoothViewModel = hiltViewModel()) {
+    val coroutineScope = rememberCoroutineScope()
+    val sheetState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
 
-    Column(Modifier.fillMaxSize()) {
+    ModalBottomSheetLayout(
+        sheetState = sheetState,
+        sheetElevation = 8.dp,
+        sheetContent = { Text(text = "GPS needs to be enable") }) {
 
-        CustomSwitch(modifier = Modifier.padding(top = 10.dp),
-            text = R.string.bluetooth_action,
-            isChecked = viewModel.isBluetoothOn,
-            onCheckedChange = { isON ->
-                if (isON) viewModel.enableBle()
-                else viewModel.disableBle()
+        Column(Modifier.fillMaxSize()) {
 
-                viewModel.isBluetoothOn = isON
-            })
+            // Bluetooth Switch
+            CustomSwitch(modifier = Modifier.padding(top = 10.dp),
+                text = R.string.bluetooth_action,
+                isChecked = viewModel.isBluetoothOn,
+                onCheckedChange = { isON ->
+                    viewModel.enableDisableBle()
+                    viewModel.isBluetoothOn = isON
+                })
 
-        if (viewModel.isBluetoothOn) {
+            if (viewModel.isBluetoothOn) {
 
-            ScanButton(
-                navController = navController,
-                onClick = if (!viewModel.isScanning.value) viewModel::startScan else viewModel::cancelScan,
-                isScanning = viewModel.isScanning.value
-            )
+                ScanButton(
+                    navController = navController,
+                    onClick = viewModel::startScan,
+                    isScanning = viewModel.isScanning.value,
+                    showDialog = {
+                        coroutineScope.launch {
+                            sheetState.show()
+                        }
+                    }
+                )
 
-            DeviceList(
-                textId = R.string.my_devices,
-                deviceList = viewModel.myDevices.value
-            )
+                // Lists
+                Column(Modifier.verticalScroll(rememberScrollState())) {
+                    DeviceList(
+                        textId = R.string.my_devices,
+                        deviceList = viewModel.myDevices.value
+                    )
 
-            Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
 
-            DeviceList(
-                textId = R.string.other_devices,
-                deviceList = viewModel.otherDevices.value
-            )
+                    DeviceList(
+                        textId = R.string.other_devices,
+                        deviceList = viewModel.otherDevices.value
+                    )
+
+                    if (viewModel.devicesNotFound.value)
+                        DeviceListNotFound()
+                }
+            }
         }
     }
-
-
 }
 
 @Composable
-private fun ScanButton(navController: NavController, onClick: () -> Unit, isScanning: Boolean) {
+private fun ScanButton(navController: NavController, onClick: () -> Unit, showDialog: () -> Unit, isScanning: Boolean) {
     val coroutine = rememberCoroutineScope()
     val context = LocalContext.current
+    val locationManager = context.getSystemService(LOCATION_SERVICE) as LocationManager?
 
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Spacer(Modifier.weight(1f))
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 5.dp)
+    ) {
 
         if (isScanning)
             CircularProgressIndicator(
-                strokeWidth = 3.dp,
-                modifier = Modifier.size(30.dp)
+                modifier = Modifier.align(Alignment.Center),
+                strokeWidth = 3.dp
             )
 
-        Spacer(Modifier.weight(0.7f))
-
-        TextButton(
-            modifier = Modifier
-                .padding(top = 15.dp, end = 15.dp),
+        TextButton(modifier = Modifier
+            .padding(end = 15.dp)
+            .align(Alignment.CenterEnd),
+            enabled = !isScanning,
             onClick = {
-                coroutine.launch {
-                    context.checkLocationPermission(
-                        onGranted = onClick,
-                        onNotGranted = {
-                            navController.navigate((Directions.locationPermission.name))
-                        })
-                }
+                if (locationManager != null && !locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                    showDialog()
+                } else
+                    coroutine.launch {
+                        context.checkLocationPermission(
+                            onGranted = onClick,
+                            onNotGranted = {
+                                navController.navigate((Directions.locationPermission.name))
+                            })
+                    }
             }
         ) {
             Text(
-                text = (if (!isScanning) stringResource(id = R.string.scan_action) else stringResource(id = R.string.cancel_action)).uppercase(),
-                color = if (!isScanning) blueDark else red,
+                modifier = Modifier.padding(vertical = 5.dp),
+                text = stringResource(id = R.string.scan_action).uppercase(),
+                color = if (!isScanning) blueDark else greyDark,
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp
             )
@@ -110,7 +135,7 @@ private fun ScanButton(navController: NavController, onClick: () -> Unit, isScan
 }
 
 @Composable
-private fun DeviceList(@StringRes textId: Int, deviceList: List<Device>) {
+private fun DeviceList(@StringRes textId: Int, deviceList: List<BluetoothDevice>) {
 
     if (deviceList.isNotEmpty()) {
         Text(
@@ -122,14 +147,14 @@ private fun DeviceList(@StringRes textId: Int, deviceList: List<Device>) {
 
         Surface(shape = RoundedCornerShape(18.dp)) {
 
-            LazyColumn(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp)
             ) {
 
-                itemsIndexed(deviceList) { index, device ->
-                    DeviceCard(device)
+                deviceList.forEachIndexed { index, device ->
+                    DeviceCard(device.name)
 
                     if (deviceList.count().minus(1) != index)
                         Divider(Modifier.padding(start = 30.dp))
@@ -140,7 +165,7 @@ private fun DeviceList(@StringRes textId: Int, deviceList: List<Device>) {
 }
 
 @Composable
-private fun DeviceCard(device: Device) {
+private fun DeviceCard(name: String) {
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -152,23 +177,45 @@ private fun DeviceCard(device: Device) {
         Icon(painter = painterResource(id = R.drawable.ic_smartphone), contentDescription = "Smartphone")
 
         Column(Modifier.padding(start = 10.dp)) {
-            Text(text = device.name, fontSize = 18.sp)
-            Text(
-                modifier = Modifier.padding(top = 5.dp),
-                text = device.address,
-                fontSize = 14.sp,
-                color = grey
-            )
+            Text(text = name, fontSize = 18.sp)
+//            Text(
+//                modifier = Modifier.padding(top = 5.dp),
+//                text = device.address,
+//                fontSize = 14.sp,
+//                color = grey
+//            )
         }
 
-        if (device.isConnected) {
-            Spacer(modifier = Modifier.weight(1f))
+//        if (device.isConnected) {
+//            Spacer(modifier = Modifier.weight(1f))
+//
+//            Text(
+//                text = stringResource(id = R.string.connected),
+//                fontSize = 16.sp,
+//                color = green
+//            )
+//        }
+    }
+}
 
-            Text(
-                text = stringResource(id = R.string.connected),
-                fontSize = 16.sp,
-                color = green
-            )
-        }
+@Composable
+private fun DeviceListNotFound() {
+
+    Text(
+        modifier = Modifier.padding(start = 16.dp, bottom = 5.dp),
+        text = stringResource(id = R.string.other_devices),
+        fontWeight = FontWeight.Bold,
+        fontSize = 14.sp
+    )
+
+    Surface(
+        shape = RoundedCornerShape(18.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+
+        DeviceCard(stringResource(id = R.string.devices_not_found))
+
     }
 }

@@ -22,5 +22,6 @@
     <string name="permission_priming_location_title">" would like to know your location."</string>
     <string name="permission_priming_location_message">By enabling Location Permissions, the app can search for nearby devices.</string>
     <string name="permission_denied_location_message"><![CDATA[We won’t be able to work properly until you go to your <font color=\"#00A9E6\">device settings</font> and give us <font color=\"#00A9E6\">permission</font> to connect to your <font color=\"#00A9E6\">location</font>.]]></string>
+    <string name="devices_not_found">Devices not found</string>
 
 </resources>

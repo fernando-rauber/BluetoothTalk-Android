@@ -1,11 +1,11 @@
 package uk.fernando.bluetoothtalk.viewmodel
 
+import android.bluetooth.BluetoothDevice
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.os.IBinder
-import android.util.Log
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -16,9 +16,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import uk.fernando.bluetoothtalk.BaseApplication
-import uk.fernando.bluetoothtalk.ext.TAG
-import uk.fernando.bluetoothtalk.model.Device
 import uk.fernando.bluetoothtalk.service.MyBleService
+import uk.fernando.bluetoothtalk.service.ble.BleScanState.*
 import javax.inject.Inject
 
 
@@ -28,21 +27,23 @@ class BluetoothViewModel @Inject constructor(val context: BaseApplication) : Bas
     private val mConnection = object : ServiceConnection {
         override fun onServiceConnected(className: ComponentName, servic: IBinder) {
             val binder = servic as MyBleService.BleBinder
-            service.tryEmit(binder.getService())
+            bleService.tryEmit(binder.getService())
         }
 
         override fun onServiceDisconnected(className: ComponentName) {
-            Log.e(TAG, "onServiceDisconnected")
+            bleService.tryEmit(null)
+//            context.unbindService(this)
         }
     }
 
-    var service = MutableStateFlow<MyBleService?>(null)
+    var bleService = MutableStateFlow<MyBleService?>(null)
 
     var isBluetoothOn by mutableStateOf(false)
     val isScanning: MutableState<Boolean> = mutableStateOf(false)
+    val devicesNotFound = mutableStateOf(false)
 
-    val myDevices: MutableState<List<Device>> = mutableStateOf(listOf())
-    val otherDevices: MutableState<List<Device>> = mutableStateOf(listOf())
+    val myDevices: MutableState<List<BluetoothDevice>> = mutableStateOf(listOf())
+    val otherDevices: MutableState<List<BluetoothDevice>> = mutableStateOf(listOf())
 
     init {
         Intent(context, MyBleService::class.java).also { intent ->
@@ -50,15 +51,19 @@ class BluetoothViewModel @Inject constructor(val context: BaseApplication) : Bas
         }
 
         viewModelScope.launch {
-            service.collect {
-                it?.let {
+            bleService.collect { service ->
+                service?.let {
 
-                    it.isBluetoothOn.collect { isOn ->
-                        isBluetoothOn = isOn
-                    }
-
-                    it.isSearching.collect { result ->
-                        isScanning.value = result
+                    service.scanState.collect { state ->
+                        when (state) {
+                            is BluetoothStatus -> isBluetoothOn = state.isOn
+                            is ScanStatus -> isScanning.value = state.isOn
+                            is ScanResultsPaired -> myDevices.value = state.pairedResults
+                            is ScanResultsOthers -> otherDevices.value = state.othersResults
+                            is Error -> {}
+                            is AdvertisementNotSupported -> {}
+                            is NotFound -> devicesNotFound.value = state.notFound
+                        }
                     }
                 }
             }
@@ -66,29 +71,11 @@ class BluetoothViewModel @Inject constructor(val context: BaseApplication) : Bas
     }
 
     fun startScan() {
-        viewModelScope.launch {
-            service.value?.let { myService ->
-                myService.startSearch()
-
-                myDevices.value = myService.getPairedDevices()
-
-                myService.otherDevices.collect {
-                    otherDevices.value = it
-                }
-            }
-        }
+        bleService.value?.startScan()
     }
 
-    fun cancelScan() {
-        service.value?.cancelSearch()
-    }
-
-    fun enableBle() {
-        service.value?.enableBle()
-    }
-
-    fun disableBle() {
-        service.value?.disableBle()
+    fun enableDisableBle() {
+        bleService.value?.enableDisableBle()
     }
 
 }
