@@ -35,9 +35,11 @@ class MyBleManagerScan(private val adapter: BluetoothAdapter) {
 
     private fun getBluetoothStatus() {
         scanState.value = BleScanState.BluetoothStatus(adapter.isEnabled)
+        if (adapter.isEnabled)
+            getPairedDevices()
     }
 
-    private fun getPairedDevices() {
+    fun getPairedDevices() {
         val pairedDevices = adapter.bondedDevices?.toList() ?: emptyList<BluetoothDevice>()
         scanState.value = BleScanState.ScanResultsPaired(pairedDevices)
     }
@@ -45,7 +47,7 @@ class MyBleManagerScan(private val adapter: BluetoothAdapter) {
     fun startScan() {
         // If advertisement is not supported on this device then other devices will not be able to
         // discover and connect to it.
-        if (adapter.isMultipleAdvertisementSupported == false) {
+        if (!adapter.isMultipleAdvertisementSupported) {
             Log.e(TAG, "startScan: isMultipleAdvertisementSupported ")
             scanState.value = BleScanState.AdvertisementNotSupported
             return
@@ -57,8 +59,6 @@ class MyBleManagerScan(private val adapter: BluetoothAdapter) {
             scanState.value = BleScanState.ScanStatus(true)
             scanState.value = BleScanState.NotFound(false)
 
-            getPairedDevices()
-
             // Stop scanning after the scan period
             Handler(Looper.getMainLooper()).postDelayed({
                 stopScan()
@@ -66,7 +66,7 @@ class MyBleManagerScan(private val adapter: BluetoothAdapter) {
 
             // clean & post list
             scanResults.clear()
-            scanState.value = BleScanState.ScanResultsOthers(scanResults.values.toList())
+            scanState.value = BleScanState.ScanResultsOthers(emptyList())
 
             // start new scan
             scanCallback = DeviceScanCallback()

@@ -30,7 +30,6 @@ class MyBleService : LifecycleService() {
 
     val scanState = MutableStateFlow<BleScanState?>(null)
 
-
     private fun initBleScanner() {
         lifecycleScope.launch {
             bleScanner.scanState.collect {

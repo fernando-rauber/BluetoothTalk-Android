@@ -17,6 +17,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -81,7 +82,7 @@ fun BluetoothPage(navController: NavController = NavController(LocalContext.curr
                     )
 
                     if (viewModel.devicesNotFound.value)
-                        DeviceListNotFound()
+                        DeviceNotFound()
                 }
             }
         }
@@ -134,6 +135,7 @@ private fun ScanButton(navController: NavController, onClick: () -> Unit, showDi
     }
 }
 
+@ExperimentalMaterialApi
 @Composable
 private fun DeviceList(@StringRes textId: Int, deviceList: List<BluetoothDevice>) {
 
@@ -154,7 +156,7 @@ private fun DeviceList(@StringRes textId: Int, deviceList: List<BluetoothDevice>
             ) {
 
                 deviceList.forEachIndexed { index, device ->
-                    DeviceCard(device.name)
+                    DeviceCard(device.name.orEmpty())
 
                     if (deviceList.count().minus(1) != index)
                         Divider(Modifier.padding(start = 30.dp))
@@ -164,6 +166,7 @@ private fun DeviceList(@StringRes textId: Int, deviceList: List<BluetoothDevice>
     }
 }
 
+@ExperimentalMaterialApi
 @Composable
 private fun DeviceCard(name: String) {
 
@@ -198,8 +201,9 @@ private fun DeviceCard(name: String) {
     }
 }
 
+@ExperimentalMaterialApi
 @Composable
-private fun DeviceListNotFound() {
+private fun DeviceNotFound() {
 
     Text(
         modifier = Modifier.padding(start = 16.dp, bottom = 5.dp),
@@ -212,10 +216,16 @@ private fun DeviceListNotFound() {
         shape = RoundedCornerShape(18.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp)
     ) {
 
-        DeviceCard(stringResource(id = R.string.devices_not_found))
+        Text(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            text = stringResource(id = R.string.devices_not_found),
+            fontSize = 18.sp,
+            textAlign = TextAlign.Center
+        )
 
     }
 }
