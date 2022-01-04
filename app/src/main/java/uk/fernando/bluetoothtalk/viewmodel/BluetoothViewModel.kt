@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import uk.fernando.bluetoothtalk.BaseApplication
 import uk.fernando.bluetoothtalk.service.ble.BleScanState.*
+import uk.fernando.bluetoothtalk.service.ble.ChatServer
 import uk.fernando.bluetoothtalk.service.ble.MyBleManagerScan
 import javax.inject.Inject
 
@@ -70,6 +71,17 @@ class BluetoothViewModel @Inject constructor(val context: BaseApplication) : Bas
 
     fun startScan() {
         bleManager?.startScan()
+    }
+
+    fun connectToDevice(device: BluetoothDevice){
+        ChatServer.setCurrentChatConnection(device)
+
+        viewModelScope.launch {
+            delay(2000)
+            ChatServer.sendMessage("********oieeee")
+            delay(2000)
+            ChatServer.sendMessage("********oieeee2")
+        }
     }
 
 //    private fun setupListener() {

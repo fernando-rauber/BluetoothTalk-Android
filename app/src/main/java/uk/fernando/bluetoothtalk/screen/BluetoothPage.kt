@@ -4,13 +4,13 @@ import android.bluetooth.BluetoothDevice
 import android.content.Context.LOCATION_SERVICE
 import android.location.LocationManager
 import androidx.annotation.StringRes
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -18,16 +18,21 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import uk.fernando.bluetoothtalk.R
+import uk.fernando.bluetoothtalk.components.CustomButton
 import uk.fernando.bluetoothtalk.components.CustomSwitch
+import uk.fernando.bluetoothtalk.components.GenericDialog
 import uk.fernando.bluetoothtalk.ext.checkLocationPermission
 import uk.fernando.bluetoothtalk.navigation.Directions
 import uk.fernando.bluetoothtalk.theme.blueDark
+import uk.fernando.bluetoothtalk.theme.grey
 import uk.fernando.bluetoothtalk.theme.greyDark
 import uk.fernando.bluetoothtalk.viewmodel.BluetoothViewModel
 
@@ -35,13 +40,9 @@ import uk.fernando.bluetoothtalk.viewmodel.BluetoothViewModel
 @ExperimentalMaterialApi
 @Composable
 fun BluetoothPage(navController: NavController = NavController(LocalContext.current), viewModel: BluetoothViewModel = hiltViewModel()) {
-    val coroutineScope = rememberCoroutineScope()
-    val sheetState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
+    var gpsDialog by remember { mutableStateOf(false) }
 
-    ModalBottomSheetLayout(
-        sheetState = sheetState,
-        sheetElevation = 8.dp,
-        sheetContent = { Text(text = "GPS needs to be enable") }) {
+    Box {
 
         Column(Modifier.fillMaxSize()) {
 
@@ -61,9 +62,7 @@ fun BluetoothPage(navController: NavController = NavController(LocalContext.curr
                     onClick = viewModel::startScan,
                     isScanning = viewModel.isScanning.value,
                     showDialog = {
-                        coroutineScope.launch {
-                            sheetState.show()
-                        }
+                        gpsDialog = true
                     }
                 )
 
@@ -71,14 +70,20 @@ fun BluetoothPage(navController: NavController = NavController(LocalContext.curr
                 Column(Modifier.verticalScroll(rememberScrollState())) {
                     DeviceList(
                         textId = R.string.my_devices,
-                        deviceList = viewModel.myDevices.value
+                        deviceList = viewModel.myDevices.value,
+                        onItemClick = {
+
+                        }
                     )
 
                     Spacer(modifier = Modifier.height(20.dp))
 
                     DeviceList(
                         textId = R.string.other_devices,
-                        deviceList = viewModel.otherDevices.value
+                        deviceList = viewModel.otherDevices.value,
+                        onItemClick = {
+                            viewModel.connectToDevice(it)
+                        }
                     )
 
                     if (viewModel.devicesNotFound.value)
@@ -86,7 +91,15 @@ fun BluetoothPage(navController: NavController = NavController(LocalContext.curr
                 }
             }
         }
+
+        if (gpsDialog) {
+            val onDismiss = { gpsDialog = false }
+            Dialog(onDismissRequest = onDismiss) {
+                GpsDialog(onDismiss = onDismiss)
+            }
+        }
     }
+
 }
 
 @Composable
@@ -137,7 +150,7 @@ private fun ScanButton(navController: NavController, onClick: () -> Unit, showDi
 
 @ExperimentalMaterialApi
 @Composable
-private fun DeviceList(@StringRes textId: Int, deviceList: List<BluetoothDevice>) {
+private fun DeviceList(@StringRes textId: Int, deviceList: List<BluetoothDevice>, onItemClick: (BluetoothDevice) -> Unit) {
 
     if (deviceList.isNotEmpty()) {
         Text(
@@ -156,7 +169,7 @@ private fun DeviceList(@StringRes textId: Int, deviceList: List<BluetoothDevice>
             ) {
 
                 deviceList.forEachIndexed { index, device ->
-                    DeviceCard(device.name.orEmpty())
+                    DeviceCard(device, onItemClick)
 
                     if (deviceList.count().minus(1) != index)
                         Divider(Modifier.padding(start = 30.dp))
@@ -168,25 +181,26 @@ private fun DeviceList(@StringRes textId: Int, deviceList: List<BluetoothDevice>
 
 @ExperimentalMaterialApi
 @Composable
-private fun DeviceCard(name: String) {
+private fun DeviceCard(device: BluetoothDevice, onClick: (BluetoothDevice) -> Unit) {
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
+            .clickable { onClick(device) }
             .padding(vertical = 10.dp)
     ) {
 
         Icon(painter = painterResource(id = R.drawable.ic_smartphone), contentDescription = "Smartphone")
 
         Column(Modifier.padding(start = 10.dp)) {
-            Text(text = name, fontSize = 18.sp)
-//            Text(
-//                modifier = Modifier.padding(top = 5.dp),
-//                text = device.address,
-//                fontSize = 14.sp,
-//                color = grey
-//            )
+            Text(text = device.name.orEmpty(), fontSize = 18.sp)
+            Text(
+                modifier = Modifier.padding(top = 5.dp),
+                text = device.address,
+                fontSize = 14.sp,
+                color = grey
+            )
         }
 
 //        if (device.isConnected) {
@@ -227,5 +241,30 @@ private fun DeviceNotFound() {
             textAlign = TextAlign.Center
         )
 
+    }
+}
+
+@Preview
+@Composable
+fun GpsDialog(onDismiss: () -> Unit = {}) {
+    GenericDialog(onDismiss = onDismiss) {
+        Column(
+            Modifier
+                .padding(top = 30.dp, bottom = 10.dp)
+                .padding(horizontal = 10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+
+            Text(
+                text = stringResource(id = R.string.gps_message),
+                fontSize = 16.sp,
+                textAlign = TextAlign.Center
+            )
+            Spacer(Modifier.height(26.dp))
+            CustomButton(
+                onClick = onDismiss, text = stringResource(id = R.string.okay_action),
+                modifier = Modifier.sizeIn(minWidth = 125.dp, minHeight = 48.dp)
+            )
+        }
     }
 }
