@@ -3,6 +3,10 @@ package uk.fernando.bluetoothtalk.service.ble
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.le.*
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.os.Handler
 import android.os.Looper
 import android.os.ParcelUuid
@@ -13,13 +17,13 @@ import java.util.*
 
 class MyBleManagerScan(private val adapter: BluetoothAdapter) {
 
-    private val scanner: BluetoothLeScanner?
+    private val scanner: BluetoothLeScanner
         get() = adapter.bluetoothLeScanner
-
-    val scanState = MutableStateFlow<BleScanState?>(null)
 
     // String key is the address of the bluetooth device
     private val scanResults = mutableMapOf<String, BluetoothDevice>()
+
+    val scanState = MutableStateFlow<BleScanState?>(null)
 
     private var scanCallback: DeviceScanCallback? = null
     private val scanFilters: List<ScanFilter>
@@ -33,15 +37,14 @@ class MyBleManagerScan(private val adapter: BluetoothAdapter) {
         getBluetoothStatus()
     }
 
+
     private fun getBluetoothStatus() {
-        scanState.value = BleScanState.BluetoothStatus(adapter.isEnabled)
-        if (adapter.isEnabled)
-            getPairedDevices()
+        scanState.tryEmit(BleScanState.BluetoothStatus(adapter.isEnabled))
     }
 
-    fun getPairedDevices() {
+    suspend fun getPairedDevices() {
         val pairedDevices = adapter.bondedDevices?.toList() ?: emptyList<BluetoothDevice>()
-        scanState.value = BleScanState.ScanResultsPaired(pairedDevices)
+        scanState.emit(BleScanState.ScanResultsPaired(pairedDevices))
     }
 
     fun startScan() {
@@ -49,15 +52,15 @@ class MyBleManagerScan(private val adapter: BluetoothAdapter) {
         // discover and connect to it.
         if (!adapter.isMultipleAdvertisementSupported) {
             Log.e(TAG, "startScan: isMultipleAdvertisementSupported ")
-            scanState.value = BleScanState.AdvertisementNotSupported
+            scanState.tryEmit(BleScanState.AdvertisementNotSupported)
             return
         }
 
         if (scanCallback == null) {
             Log.e(TAG, "Start Scanning")
             // Update the UI to indicate an active scan is starting
-            scanState.value = BleScanState.ScanStatus(true)
-            scanState.value = BleScanState.NotFound(false)
+            scanState.tryEmit(BleScanState.ScanStatus(true))
+            scanState.tryEmit(BleScanState.NotFound(false))
 
             // Stop scanning after the scan period
             Handler(Looper.getMainLooper()).postDelayed({
@@ -66,11 +69,11 @@ class MyBleManagerScan(private val adapter: BluetoothAdapter) {
 
             // clean & post list
             scanResults.clear()
-            scanState.value = BleScanState.ScanResultsOthers(emptyList())
+            scanState.tryEmit(BleScanState.ScanResultsOthers(emptyList()))
 
             // start new scan
             scanCallback = DeviceScanCallback()
-            scanner?.startScan(scanFilters, scanSettings, scanCallback)
+            scanner.startScan(scanFilters, scanSettings, scanCallback)
 
         } else {
             Log.e(TAG, "Already scanning")
@@ -79,12 +82,12 @@ class MyBleManagerScan(private val adapter: BluetoothAdapter) {
 
     private fun stopScan() {
         Log.e(TAG, "Stopping Scanning")
-        scanner?.stopScan(scanCallback)
+        scanner.stopScan(scanCallback)
         scanCallback = null
 
-        scanState.value = BleScanState.ScanStatus(false)
+        scanState.tryEmit(BleScanState.ScanStatus(false))
         if (scanResults.isEmpty())
-            scanState.value = BleScanState.NotFound(true)
+            scanState.tryEmit(BleScanState.NotFound(true))
     }
 
     private fun buildScanFilters(): List<ScanFilter> {
@@ -110,7 +113,7 @@ class MyBleManagerScan(private val adapter: BluetoothAdapter) {
                     scanResults[device.address] = device
                 }
             }
-            scanState.value = BleScanState.ScanResultsOthers(scanResults.values.toList())
+            scanState.tryEmit(BleScanState.ScanResultsOthers(scanResults.values.toList()))
         }
 
         override fun onScanResult(callbackType: Int, result: ScanResult) {
@@ -118,13 +121,13 @@ class MyBleManagerScan(private val adapter: BluetoothAdapter) {
             result.device?.let { device ->
                 scanResults[device.address] = device
             }
-            scanState.value = BleScanState.ScanResultsOthers(scanResults.values.toList())
+            scanState.tryEmit(BleScanState.ScanResultsOthers(scanResults.values.toList()))
         }
 
         override fun onScanFailed(errorCode: Int) {
             super.onScanFailed(errorCode)
             val errorMessage = "Scan failed with error: $errorCode"
-            scanState.value = BleScanState.Error(errorMessage)
+            scanState.tryEmit(BleScanState.Error(errorMessage))
         }
     }
 

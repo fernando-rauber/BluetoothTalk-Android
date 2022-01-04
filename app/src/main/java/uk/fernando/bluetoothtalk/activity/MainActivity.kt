@@ -19,20 +19,23 @@ import uk.fernando.bluetoothtalk.components.BottomNavigationBar
 import uk.fernando.bluetoothtalk.navigation.Directions
 import uk.fernando.bluetoothtalk.navigation.buildGraph
 import uk.fernando.bluetoothtalk.service.ServiceBinderLifecycleObserver
+import uk.fernando.bluetoothtalk.service.ble.ChatServer
 import uk.fernando.bluetoothtalk.theme.MyTheme
 
 @ExperimentalMaterialApi
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-    private val serviceObserver = ServiceBinderLifecycleObserver(this)
+//    private val serviceObserver = ServiceBinderLifecycleObserver(this)
 
-    init {
-        lifecycle.addObserver(serviceObserver)
-    }
+//    init {
+//        lifecycle.addObserver(serviceObserver)
+//    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        ChatServer.startServer(application)
 
         setContent {
             val controller = rememberNavController()
