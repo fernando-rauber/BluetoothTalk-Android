@@ -15,12 +15,21 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-object AppModule {
+object DatabaseModule {
 
-    @Singleton
     @Provides
-    fun provideApplication(@ApplicationContext app: Context): BaseApplication {
-        return app as BaseApplication
+    fun provideDataBase(@ApplicationContext context: Context): BleDatabase {
+        return Room.databaseBuilder(context, BleDatabase::class.java, "blechat.db")
+            .fallbackToDestructiveMigration()
+            .build()
     }
+
+    @Provides
+    fun reportDAO(db: BleDatabase): BleDao {
+        return db.bleDao()
+    }
+
+    @Provides
+    fun provideMessageRepository(dao: BleDao) = MessageRepository(dao)
 
 }

@@ -17,7 +17,7 @@ fun NavGraphBuilder.buildGraph(navController: NavController) {
         BluetoothPage(navController)
     }
     composable(Directions.chat.name) {
-        ChatPage(navController)
+        ChatListPage(navController)
     }
     composable(Directions.settings.name) {
         SettingsPage(navController)

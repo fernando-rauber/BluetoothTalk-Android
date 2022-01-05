@@ -21,4 +21,9 @@ class MessageRepository @Inject constructor(private val dao: BleDao) {
             dao.insert(user)
         }
     }
+
+    suspend fun getAllUserWithChat() = withContext(Dispatchers.IO) {
+        dao.getAllUserWithChat()
+    }
+
 }

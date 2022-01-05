@@ -10,7 +10,8 @@ data class UserEntity(
     @PrimaryKey
     var address: String,
 
-    val name: String
+    val name: String,
+    val image: String? = null
 
 ) : Serializable {
 

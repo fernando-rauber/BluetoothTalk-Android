@@ -23,6 +23,13 @@ object Directions {
             get() = emptyList()
     }
 
+    val chatList = object : NavigationCommand {
+        override val name: String
+            get() = "chat_list"
+        override val arguments: List<NamedNavArgument>
+            get() = emptyList()
+    }
+
     val chat = object : NavigationCommand {
         override val name: String
             get() = "chat"

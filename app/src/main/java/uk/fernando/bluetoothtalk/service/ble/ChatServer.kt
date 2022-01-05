@@ -88,6 +88,38 @@ object ChatServer {
         }
     }
 
+    fun setCurrentChatConnection(device: BluetoothDevice) {
+        currentDevice = device
+        // Set gatt so BluetoothChatFragment can display the device data
+        //_deviceConnection.value = DeviceConnectionState.Connected(device)
+        connectToChatDevice(device)
+    }
+
+    private fun connectToChatDevice(device: BluetoothDevice) {
+        gattClientCallback = GattClientCallback()
+        gattClient = device.connectGatt(app, false, gattClientCallback)
+    }
+
+    fun sendMessage(message: String): Boolean {
+        Log.d(TAG, "Send a message")
+        messageCharacteristic?.let { characteristic ->
+            characteristic.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+
+            val messageBytes = message.toByteArray(Charsets.UTF_8)
+            characteristic.value = messageBytes
+            gatt?.let {
+                val success = it.writeCharacteristic(messageCharacteristic)
+                Log.d(TAG, "onServicesDiscovered: message send: $success")
+                if (success) {
+                    //_messages.value = Message.LocalMessage(message)
+                }
+            } ?: run {
+                Log.d(TAG, "sendMessage: no gatt connection to send a message with")
+            }
+        }
+        return false
+    }
+
     private fun setupGattService(): BluetoothGattService {
         // Setup gatt service
         val service = BluetoothGattService(SERVICE_UUID, BluetoothGattService.SERVICE_TYPE_PRIMARY)
