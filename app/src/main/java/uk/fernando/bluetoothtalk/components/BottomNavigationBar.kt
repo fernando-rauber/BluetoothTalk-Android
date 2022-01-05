@@ -50,9 +50,9 @@ fun BottomNavigationBar(navController: NavController) {
                         navController.navigate(Directions.bluetooth.name)
                 }
 
-                NavigationItemCustom(currentRoute == Directions.chat.name, R.drawable.ic_chat, R.string.chat_action) {
-                    if (currentRoute != Directions.chat.name)
-                        navController.navigate(Directions.chat.name)
+                NavigationItemCustom(currentRoute == Directions.chatList.name, R.drawable.ic_chat, R.string.chat_action) {
+                    if (currentRoute != Directions.chatList.name)
+                        navController.navigate(Directions.chatList.name)
                 }
 
                 NavigationItemCustom(currentRoute == Directions.settings.name, R.drawable.ic_settings, R.string.settings_action) {

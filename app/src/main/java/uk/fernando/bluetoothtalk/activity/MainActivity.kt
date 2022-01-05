@@ -46,7 +46,7 @@ class MainActivity : ComponentActivity() {
                 Scaffold(
                     bottomBar = {
                         when (navBackStackEntry?.destination?.route) {
-                            Directions.bluetooth.name, Directions.chat.name, Directions.settings.name ->
+                            Directions.bluetooth.name, Directions.chatList.name, Directions.settings.name ->
                                 BottomNavigationBar(controller)
                         }
                     }

@@ -1,6 +1,8 @@
 package uk.fernando.bluetoothtalk.navigation
 
 import androidx.navigation.NamedNavArgument
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 
 interface NavigationCommand {
     val name: String
@@ -34,7 +36,9 @@ object Directions {
         override val name: String
             get() = "chat"
         override val arguments: List<NamedNavArgument>
-            get() = emptyList()
+            get() = listOf(
+                navArgument(USER_ADDRESS) { type = NavType.StringType }
+            )
     }
 
     val settings = object : NavigationCommand {
@@ -50,6 +54,8 @@ object Directions {
         override val arguments: List<NamedNavArgument>
             get() = emptyList()
     }
+
+    const val USER_ADDRESS = "user_address"
 }
 
 
