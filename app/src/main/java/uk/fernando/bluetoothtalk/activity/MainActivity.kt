@@ -55,7 +55,7 @@ class MainActivity : ComponentActivity() {
                     Box(modifier = Modifier.padding(padding)) {
                         NavHost(
                             navController = controller,
-                            startDestination = Directions.bluetooth.name
+                            startDestination = Directions.chatList.name
                         ) {
                             buildGraph(controller)
                         }

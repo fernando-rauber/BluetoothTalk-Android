@@ -21,7 +21,7 @@ import androidx.navigation.NavController
 import coil.compose.rememberImagePainter
 import coil.transform.CircleCropTransformation
 import uk.fernando.bluetoothtalk.R
-import uk.fernando.bluetoothtalk.database.entity.UserWithChat
+import uk.fernando.bluetoothtalk.database.entity.UserWithMessage
 import uk.fernando.bluetoothtalk.ext.noRippleClickable
 import uk.fernando.bluetoothtalk.navigation.Directions
 import uk.fernando.bluetoothtalk.theme.greyDark
@@ -42,7 +42,7 @@ fun ChatListPage(navController: NavController = NavController(LocalContext.curre
 }
 
 @Composable
-private fun UserChat(user: UserWithChat, onClick: () -> Unit = {}) {
+private fun UserChat(user: UserWithMessage, onClick: () -> Unit = {}) {
 
     Row(
         Modifier
@@ -81,9 +81,9 @@ private fun UserChat(user: UserWithChat, onClick: () -> Unit = {}) {
             )
 
             // Text - Last message
-            if (user.chatList.isNotEmpty())
+            if (user.messageList.isNotEmpty())
                 Text(
-                    text = user.chatList.last().message,
+                    text = user.messageList.last().message,
                     fontWeight = FontWeight.Normal,
                     color = greyDark,
                     fontSize = 12.sp,

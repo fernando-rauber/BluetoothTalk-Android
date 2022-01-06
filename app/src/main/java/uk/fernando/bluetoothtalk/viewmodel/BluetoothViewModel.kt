@@ -75,13 +75,6 @@ class BluetoothViewModel @Inject constructor(val context: BaseApplication) : Bas
 
     fun connectToDevice(device: BluetoothDevice){
         ChatServer.setCurrentChatConnection(device)
-
-        viewModelScope.launch {
-            delay(2000)
-            ChatServer.sendMessage("********oieeee")
-            delay(2000)
-            ChatServer.sendMessage("********oieeee2")
-        }
     }
 
 //    private fun setupListener() {

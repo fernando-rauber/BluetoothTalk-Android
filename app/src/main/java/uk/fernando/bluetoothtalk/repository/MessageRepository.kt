@@ -12,7 +12,7 @@ class MessageRepository @Inject constructor(private val dao: BleDao) {
 
     suspend fun insertMessage(message: MessageEntity) {
         withContext(Dispatchers.IO) {
-//            dao.insert(speedReport)
+            dao.insert(message)
         }
     }
 
@@ -22,8 +22,16 @@ class MessageRepository @Inject constructor(private val dao: BleDao) {
         }
     }
 
-    suspend fun getAllUserWithChat() = withContext(Dispatchers.IO) {
-        dao.getAllUserWithChat()
+    suspend fun getUserById(address: String) = withContext(Dispatchers.IO) {
+        dao.getUserById(address)
+    }
+
+    suspend fun getAllUserWithMessage() = withContext(Dispatchers.IO) {
+        dao.getAllUserWithMessage()
+    }
+
+    suspend fun getMessagesByUser(address: String) = withContext(Dispatchers.IO) {
+        dao.getMessagesByUser(address)
     }
 
 }

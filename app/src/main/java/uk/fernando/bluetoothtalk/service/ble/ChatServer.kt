@@ -9,12 +9,19 @@ import android.bluetooth.le.BluetoothLeAdvertiser
 import android.content.Context
 import android.os.ParcelUuid
 import android.util.Log
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import kotlinx.coroutines.flow.MutableStateFlow
+import uk.fernando.bluetoothtalk.database.entity.MessageEntity
 import uk.fernando.bluetoothtalk.ext.TAG
+import uk.fernando.bluetoothtalk.repository.MessageRepository
 import uk.fernando.bluetoothtalk.service.ble.MyBleManagerScan.Companion.CONFIRM_UUID
 import uk.fernando.bluetoothtalk.service.ble.MyBleManagerScan.Companion.MESSAGE_UUID
 import uk.fernando.bluetoothtalk.service.ble.MyBleManagerScan.Companion.SERVICE_UUID
+import javax.inject.Inject
 
 object ChatServer {
 
@@ -46,6 +53,8 @@ object ChatServer {
     // LiveData for reporting the messages sent to the device
     private val _requestEnableBluetooth = MutableLiveData<Boolean>()
     val requestEnableBluetooth = _requestEnableBluetooth as LiveData<Boolean>
+
+    val receivedMessage = MutableStateFlow<String>("")
 
     private var gattServer: BluetoothGattServer? = null
     private var gattServerCallback: BluetoothGattServerCallback? = null
@@ -207,7 +216,8 @@ object ChatServer {
                 val message = value?.toString(Charsets.UTF_8)
                 Log.d(TAG, "onCharacteristicWriteRequest: Have message: \"$message\"")
                 message?.let {
-                    // _messages.postValue(RemoteMessage(it))
+                    receivedMessage.value = message
+                    //TODO
                 }
             }
         }

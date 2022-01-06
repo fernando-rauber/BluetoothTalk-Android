@@ -16,7 +16,7 @@ data class MessageEntity(
     var id: Long? = null,
 
     val message: String,
-    val date: Date,
+    val date: Date = Date(),
     val byMe: Boolean = false,
     @ColumnInfo(name = "user_address")
     val userAddress: String
