@@ -72,7 +72,7 @@ fun BluetoothPage(navController: NavController = NavController(LocalContext.curr
                         textId = R.string.my_devices,
                         deviceList = viewModel.myDevices.value,
                         onItemClick = {
-
+                            viewModel.connectToDevice(it)
                         }
                     )
 

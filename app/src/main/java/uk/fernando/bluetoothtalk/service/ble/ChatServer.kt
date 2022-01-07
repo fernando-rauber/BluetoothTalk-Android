@@ -9,19 +9,13 @@ import android.bluetooth.le.BluetoothLeAdvertiser
 import android.content.Context
 import android.os.ParcelUuid
 import android.util.Log
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import kotlinx.coroutines.flow.MutableStateFlow
-import uk.fernando.bluetoothtalk.database.entity.MessageEntity
 import uk.fernando.bluetoothtalk.ext.TAG
-import uk.fernando.bluetoothtalk.repository.MessageRepository
 import uk.fernando.bluetoothtalk.service.ble.MyBleManagerScan.Companion.CONFIRM_UUID
 import uk.fernando.bluetoothtalk.service.ble.MyBleManagerScan.Companion.MESSAGE_UUID
 import uk.fernando.bluetoothtalk.service.ble.MyBleManagerScan.Companion.SERVICE_UUID
-import javax.inject.Inject
 
 object ChatServer {
 
@@ -42,18 +36,11 @@ object ChatServer {
     private var advertiseSettings: AdvertiseSettings = buildAdvertiseSettings()
     private var advertiseData: AdvertiseData = buildAdvertiseData()
 
-    // LiveData for reporting the messages sent to the device
-//    private val _messages = MutableLiveData<Message>()
-//    val messages = _messages as LiveData<Message>
-
     // LiveData for reporting connection requests
     private val _connectionRequest = MutableLiveData<BluetoothDevice>()
     val connectionRequest = _connectionRequest as LiveData<BluetoothDevice>
 
-    // LiveData for reporting the messages sent to the device
-    private val _requestEnableBluetooth = MutableLiveData<Boolean>()
-    val requestEnableBluetooth = _requestEnableBluetooth as LiveData<Boolean>
-
+    // for reporting the messages sent to the device
     val receivedMessage = MutableStateFlow<String>("")
 
     private var gattServer: BluetoothGattServer? = null
@@ -70,13 +57,13 @@ object ChatServer {
     private var gatt: BluetoothGatt? = null
     private var messageCharacteristic: BluetoothGattCharacteristic? = null
 
+    // fires off every time value of the property changes
+    val deviceConnectionState = MutableStateFlow<BleConnectionState?>(null)
+
+
     fun startServer(app: Application) {
         bluetoothManager = app.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-        if (!adapter.isEnabled) {
-            // prompt the user to enable bluetooth
-            _requestEnableBluetooth.value = true
-        } else {
-            _requestEnableBluetooth.value = false
+        if (adapter.isEnabled) {
             setupGattServer(app)
             startAdvertisement()
         }
@@ -89,18 +76,15 @@ object ChatServer {
     private fun setupGattServer(app: Application) {
         gattServerCallback = GattServerCallback()
 
-        gattServer = bluetoothManager.openGattServer(
-            app,
-            gattServerCallback
-        ).apply {
+        gattServer = bluetoothManager.openGattServer(app, gattServerCallback).apply {
             addService(setupGattService())
         }
     }
 
     fun setCurrentChatConnection(device: BluetoothDevice) {
         currentDevice = device
-        // Set gatt so BluetoothChatFragment can display the device data
-        //_deviceConnection.value = DeviceConnectionState.Connected(device)
+
+        deviceConnectionState.tryEmit(BleConnectionState.Connecting)
         connectToChatDevice(device)
     }
 
@@ -190,15 +174,13 @@ object ChatServer {
             super.onConnectionStateChange(device, status, newState)
             val isSuccess = status == BluetoothGatt.GATT_SUCCESS
             val isConnected = newState == BluetoothProfile.STATE_CONNECTED
-            Log.d(
-                TAG,
-                "onConnectionStateChange: Server $device ${device.name} success: $isSuccess connected: $isConnected"
-            )
-            if (isSuccess && isConnected) {
-                _connectionRequest.postValue(device)
-            } else {
-                //_deviceConnection.postValue(DeviceConnectionState.Disconnected)
-            }
+            Log.d(TAG, "onConnectionStateChange: Server $device ${device.name} success: $isSuccess connected: $isConnected")
+
+            if (isSuccess && isConnected)
+                deviceConnectionState.tryEmit(BleConnectionState.Connected(device))
+            else
+                deviceConnectionState.tryEmit(BleConnectionState.Disconnected)
+            
         }
 
         override fun onCharacteristicWriteRequest(

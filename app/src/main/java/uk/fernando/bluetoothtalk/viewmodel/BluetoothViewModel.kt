@@ -2,6 +2,7 @@ package uk.fernando.bluetoothtalk.viewmodel
 
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
+import android.util.Log
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -13,6 +14,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import uk.fernando.bluetoothtalk.BaseApplication
+import uk.fernando.bluetoothtalk.ext.TAG
+import uk.fernando.bluetoothtalk.service.ble.BleConnectionState.*
 import uk.fernando.bluetoothtalk.service.ble.BleScanState.*
 import uk.fernando.bluetoothtalk.service.ble.ChatServer
 import uk.fernando.bluetoothtalk.service.ble.MyBleManagerScan
@@ -37,25 +40,8 @@ class BluetoothViewModel @Inject constructor(val context: BaseApplication) : Bas
         bluetoothService = context.getSystemService<BluetoothManager>()
         bleManager = MyBleManagerScan(bluetoothService!!.adapter)
 
-        viewModelScope.launch {
-
-            bleManager?.scanState?.collect { state ->
-
-                when (state) {
-                    is BluetoothStatus -> {
-                        isBluetoothOn = state.isOn
-                        if (state.isOn)
-                            bleManager?.getPairedDevices()
-                    }
-                    is ScanStatus -> isScanning.value = state.isOn
-                    is ScanResultsPaired -> myDevices.value = state.pairedResults
-                    is ScanResultsOthers -> otherDevices.value = state.othersResults
-                    is Error -> {}
-                    is AdvertisementNotSupported -> {}
-                    is NotFound -> devicesNotFound.value = state.notFound
-                }
-            }
-        }
+        initObservers()
+        initObservers2()
     }
 
     fun enableDisableBle() {
@@ -73,27 +59,58 @@ class BluetoothViewModel @Inject constructor(val context: BaseApplication) : Bas
         bleManager?.startScan()
     }
 
-    fun connectToDevice(device: BluetoothDevice){
+    fun connectToDevice(device: BluetoothDevice) {
+        Log.e(TAG, "connectToDevice")
         ChatServer.setCurrentChatConnection(device)
     }
 
-//    private fun setupListener() {
-//        val filter = IntentFilter()
-//        filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED)
-//
-//        context.registerReceiver(receiver, filter)
-//    }
+    private fun initObservers() {
+        viewModelScope.launch {
 
-//    private val receiver = object : BroadcastReceiver() {
-//
-//        override fun onReceive(context: Context, intent: Intent) {
-//            when (intent.action) {
-//                BluetoothAdapter.ACTION_STATE_CHANGED -> {
-//                    System.out.println("******${BluetoothAdapter.STATE_OFF}")
-//                    bleManager?.scanState?.tryEmit(BluetoothStatus(intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, -1) != BluetoothAdapter.STATE_OFF))
-//                }
-//            }
-//        }
-//    }
 
+            // Scan Status Observer
+            bleManager?.scanState?.collect { state ->
+
+                when (state) {
+                    is BluetoothStatus -> {
+                        isBluetoothOn = state.isOn
+                        if (state.isOn)
+                            bleManager?.getPairedDevices()
+                    }
+                    is ScanStatus -> isScanning.value = state.isOn
+                    is ScanResultsPaired -> myDevices.value = state.pairedResults
+                    is ScanResultsOthers -> otherDevices.value = state.othersResults
+                    is Error -> {}
+                    is AdvertisementNotSupported -> {}
+                    is NotFound -> devicesNotFound.value = state.notFound
+                }
+            }
+
+
+        }
+    }
+
+    private fun initObservers2() {
+        viewModelScope.launch {
+
+            // Device Connection Observer
+            ChatServer.deviceConnectionState?.collect { state ->
+                if (state != null)
+                    when (state) {
+                        is Connecting -> {
+                            Log.e(TAG, "initObservers: Connecting")
+                        }
+                        is Connected -> {
+                            Log.e(TAG, "initObservers: Connected ")
+                        }
+                        is Disconnected -> {
+                            Log.e(TAG, "initObservers: Disconnected  ")
+                        }
+                    }
+            }
+
+
+        }
+    }
 }
+
