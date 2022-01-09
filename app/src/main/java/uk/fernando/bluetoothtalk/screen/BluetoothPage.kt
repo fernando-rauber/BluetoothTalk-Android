@@ -24,6 +24,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import uk.fernando.bluetoothtalk.R
 import uk.fernando.bluetoothtalk.components.CustomButton
@@ -42,6 +44,7 @@ import uk.fernando.bluetoothtalk.viewmodel.BluetoothViewModel
 @Composable
 fun BluetoothPage(navController: NavController = NavController(LocalContext.current), viewModel: BluetoothViewModel = hiltViewModel()) {
     var gpsDialog by remember { mutableStateOf(false) }
+    val coroutine = rememberCoroutineScope()
 
     CustomSnackBar(snackBarSealed = viewModel.snackBar.value) {
 
@@ -75,7 +78,7 @@ fun BluetoothPage(navController: NavController = NavController(LocalContext.curr
                             textId = R.string.my_devices,
                             deviceList = viewModel.myDevices.value,
                             onItemClick = {
-                                viewModel.connectToDevice(it)
+                                onDeviceConnected(navController, coroutine, viewModel, device = it)
                             }
                         )
 
@@ -85,7 +88,7 @@ fun BluetoothPage(navController: NavController = NavController(LocalContext.curr
                             textId = R.string.other_devices,
                             deviceList = viewModel.otherDevices.value,
                             onItemClick = {
-                                viewModel.connectToDevice(it)
+                                onDeviceConnected(navController, coroutine, viewModel, device = it)
                             }
                         )
 
@@ -268,6 +271,17 @@ fun GpsDialog(onDismiss: () -> Unit = {}) {
                 onClick = onDismiss, text = stringResource(id = R.string.okay_action),
                 modifier = Modifier.sizeIn(minWidth = 125.dp, minHeight = 48.dp)
             )
+        }
+    }
+}
+
+private fun onDeviceConnected(navController: NavController, coroutine: CoroutineScope, viewModel: BluetoothViewModel, device: BluetoothDevice) {
+    coroutine.launch {
+        viewModel.connectToDevice(device)
+
+        viewModel.navChat.collect {
+            if (it.isNotEmpty())
+                navController.navigate(Directions.chat.name.plus("/${viewModel.navChat.value}"))
         }
     }
 }

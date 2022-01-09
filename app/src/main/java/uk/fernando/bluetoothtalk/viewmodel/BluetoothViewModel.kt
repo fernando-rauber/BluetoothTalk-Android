@@ -11,12 +11,15 @@ import androidx.core.content.getSystemService
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import uk.fernando.bluetoothtalk.BaseApplication
 import uk.fernando.bluetoothtalk.R
 import uk.fernando.bluetoothtalk.components.snackbar.SnackBarSealed
+import uk.fernando.bluetoothtalk.database.entity.UserEntity
 import uk.fernando.bluetoothtalk.ext.TAG
+import uk.fernando.bluetoothtalk.repository.MessageRepository
 import uk.fernando.bluetoothtalk.service.ble.BleConnectionState.*
 import uk.fernando.bluetoothtalk.service.ble.BleScanState.*
 import uk.fernando.bluetoothtalk.service.ble.ChatServer
@@ -25,10 +28,9 @@ import javax.inject.Inject
 
 
 @HiltViewModel
-class BluetoothViewModel @Inject constructor(val context: BaseApplication) : BaseViewModel() {
+class BluetoothViewModel @Inject constructor(val context: BaseApplication, val repository: MessageRepository) : BaseViewModel() {
 
     private var bluetoothService: BluetoothManager? = null
-
     private var bleManager: MyBleManagerScan? = null
 
     var isBluetoothOn by mutableStateOf(false)
@@ -37,6 +39,8 @@ class BluetoothViewModel @Inject constructor(val context: BaseApplication) : Bas
 
     val myDevices: MutableState<List<BluetoothDevice>> = mutableStateOf(listOf())
     val otherDevices: MutableState<List<BluetoothDevice>> = mutableStateOf(listOf())
+
+    val navChat = MutableStateFlow<String>("")
 
     init {
         bluetoothService = context.getSystemService<BluetoothManager>()
@@ -100,7 +104,11 @@ class BluetoothViewModel @Inject constructor(val context: BaseApplication) : Bas
                 state?.let {
                     when (state) {
                         is Connecting -> snackBar.value = SnackBarSealed.Success(R.string.connecting, isLongDuration = true)
-                        is Connected -> snackBar.value = SnackBarSealed.Success(messageText = "Connected to ${state.device.name}")
+                        is Connected -> {
+                            repository.insertUser(UserEntity(state.device.address, state.device.name.orEmpty()))
+                            snackBar.value = SnackBarSealed.Success(messageText = "Connected to ${state.device.name}")
+                            navChat.value = state.device.address
+                        }
                         is Disconnected -> snackBar.value = SnackBarSealed.Error(R.string.disconnected)
                         is ConnectionFailed -> snackBar.value = SnackBarSealed.Error(R.string.connection_failed)
                     }
