@@ -280,8 +280,10 @@ private fun onDeviceConnected(navController: NavController, coroutine: Coroutine
         viewModel.connectToDevice(device)
 
         viewModel.navChat.collect {
-            if (it.isNotEmpty())
+            if (it.isNotEmpty()) {
                 navController.navigate(Directions.chat.name.plus("/${viewModel.navChat.value}"))
+                viewModel.navChat.emit("") // so if has a valid value, once try to connect to a new device it wont go to the previous chat
+            }
         }
     }
 }
