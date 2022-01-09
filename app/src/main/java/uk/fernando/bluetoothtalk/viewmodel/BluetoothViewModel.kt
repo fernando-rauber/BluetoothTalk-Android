@@ -14,6 +14,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import uk.fernando.bluetoothtalk.BaseApplication
+import uk.fernando.bluetoothtalk.R
+import uk.fernando.bluetoothtalk.components.snackbar.SnackBarSealed
 import uk.fernando.bluetoothtalk.ext.TAG
 import uk.fernando.bluetoothtalk.service.ble.BleConnectionState.*
 import uk.fernando.bluetoothtalk.service.ble.BleScanState.*
@@ -94,23 +96,18 @@ class BluetoothViewModel @Inject constructor(val context: BaseApplication) : Bas
         viewModelScope.launch {
 
             // Device Connection Observer
-            ChatServer.deviceConnectionState?.collect { state ->
-                if (state != null)
+            ChatServer.deviceConnectionState.collect { state ->
+                state?.let {
                     when (state) {
-                        is Connecting -> {
-                            Log.e(TAG, "initObservers: Connecting")
-                        }
-                        is Connected -> {
-                            Log.e(TAG, "initObservers: Connected ")
-                        }
-                        is Disconnected -> {
-                            Log.e(TAG, "initObservers: Disconnected  ")
-                        }
+                        is Connecting -> snackBar.value = SnackBarSealed.Success(R.string.connecting, isLongDuration = true)
+                        is Connected -> snackBar.value = SnackBarSealed.Success(messageText = "Connected to ${state.device.name}")
+                        is Disconnected -> snackBar.value = SnackBarSealed.Error(R.string.disconnected)
+                        is ConnectionFailed -> snackBar.value = SnackBarSealed.Error(R.string.connection_failed)
                     }
+                }
             }
-
-
         }
+
     }
 }
 

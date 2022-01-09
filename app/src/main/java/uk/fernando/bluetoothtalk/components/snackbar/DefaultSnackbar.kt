@@ -1,11 +1,13 @@
 package uk.fernando.bluetoothtalk.components.snackbar
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.CornerSize
-import androidx.compose.material.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.Snackbar
+import androidx.compose.material.SnackbarHost
+import androidx.compose.material.SnackbarHostState
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -14,7 +16,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
 import uk.fernando.bluetoothtalk.theme.green
 import uk.fernando.bluetoothtalk.theme.red
 
@@ -37,32 +38,27 @@ fun DefaultSnackBar(
 }
 
 @Composable
-fun CreateSnackBar(backgroundColor: Color, message: String) {
+private fun CreateSnackBar(backgroundColor: Color, message: String) {
     Snackbar(
-        shape = MaterialTheme.shapes.large.copy(CornerSize(0.dp)),
+        modifier = Modifier.padding(0.dp),
+        shape = RoundedCornerShape(0,0,10,10),
         backgroundColor = backgroundColor
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth()
-        ) {
+        Box(modifier = Modifier.fillMaxWidth()) {
 
             // Message
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
+            Text(
+                text = message,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Light,
+                color = Color.White,
                 modifier = Modifier
-                    .weight(1f)
-                    .padding(top = 15.dp, bottom = 10.dp)
-            ) {
-                Text(
-                    text = message,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Light,
-                    color = Color.White
-                )
-            }
-
+                    .align(Alignment.Center)
+                    .padding(vertical = 15.dp)
+            )
         }
+
+
     }
 }
 

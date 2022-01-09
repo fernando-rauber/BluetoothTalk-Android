@@ -52,8 +52,6 @@ object ChatServer {
     // Properties for current chat device connection
     private var currentDevice: BluetoothDevice? = null
 
-    //    private val _deviceConnection = MutableLiveData<DeviceConnectionState>()
-//    val deviceConnection = _deviceConnection as LiveData<DeviceConnectionState>
     private var gatt: BluetoothGatt? = null
     private var messageCharacteristic: BluetoothGattCharacteristic? = null
 
@@ -178,21 +176,16 @@ object ChatServer {
 
             if (isSuccess && isConnected)
                 deviceConnectionState.tryEmit(BleConnectionState.Connected(device))
-            else
+            else if (!isSuccess && !isConnected)
                 deviceConnectionState.tryEmit(BleConnectionState.Disconnected)
-            
+            else
+                deviceConnectionState.tryEmit(BleConnectionState.ConnectionFailed)
+
         }
 
-        override fun onCharacteristicWriteRequest(
-            device: BluetoothDevice,
-            requestId: Int,
-            characteristic: BluetoothGattCharacteristic,
-            preparedWrite: Boolean,
-            responseNeeded: Boolean,
-            offset: Int,
-            value: ByteArray?
-        ) {
+        override fun onCharacteristicWriteRequest(device: BluetoothDevice, requestId: Int, characteristic: BluetoothGattCharacteristic, preparedWrite: Boolean, responseNeeded: Boolean, offset: Int, value: ByteArray?) {
             super.onCharacteristicWriteRequest(device, requestId, characteristic, preparedWrite, responseNeeded, offset, value)
+
             if (characteristic.uuid == MESSAGE_UUID) {
                 gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, 0, null)
                 val message = value?.toString(Charsets.UTF_8)
@@ -211,6 +204,7 @@ object ChatServer {
             val isSuccess = status == BluetoothGatt.GATT_SUCCESS
             val isConnected = newState == BluetoothProfile.STATE_CONNECTED
             Log.d(TAG, "onConnectionStateChange: Client $gatt  success: $isSuccess connected: $isConnected")
+
             // try to send a message to the other device as a test
             if (isSuccess && isConnected) {
                 // discover services
@@ -241,7 +235,5 @@ object ChatServer {
             Log.d(TAG, "Advertising failed")
             //_viewState.value = DeviceScanViewState.Error(errorMessage)
         }
-
-
     }
 }

@@ -2,6 +2,7 @@ package uk.fernando.bluetoothtalk.components.snackbar
 
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ScaffoldState
+import androidx.compose.material.SnackbarDuration
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -29,11 +30,13 @@ constructor(private val scope: CoroutineScope) {
     fun showSnackBar(
         scaffoldState: ScaffoldState,
         message: String = "",
+        longDuration: Boolean
     ) {
         if (snackBarJob == null) {
             snackBarJob = scope.launch {
                 scaffoldState.snackbarHostState.showSnackbar(
-                    message = message
+                    message = message,
+                    duration = if(longDuration) SnackbarDuration.Long else SnackbarDuration.Short
                 )
                 cancelActiveJob()
             }
@@ -41,7 +44,8 @@ constructor(private val scope: CoroutineScope) {
             cancelActiveJob()
             snackBarJob = scope.launch {
                 scaffoldState.snackbarHostState.showSnackbar(
-                    message = message
+                    message = message,
+                    duration = if(longDuration) SnackbarDuration.Long else SnackbarDuration.Short
                 )
                 cancelActiveJob()
             }

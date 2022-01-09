@@ -65,7 +65,7 @@ class MyBleManagerScan(private val adapter: BluetoothAdapter) {
             // Stop scanning after the scan period
             Handler(Looper.getMainLooper()).postDelayed({
                 stopScan()
-            }, 15000L)
+            }, 10000L)
 
             // clean & post list
             scanResults.clear()
@@ -135,12 +135,5 @@ class MyBleManagerScan(private val adapter: BluetoothAdapter) {
         val SERVICE_UUID: UUID = UUID.fromString("0000b81d-0000-1000-8000-00805f9b34fb")
         val MESSAGE_UUID: UUID = UUID.fromString("7db3e235-3608-41f3-a03c-955fcbd2ea4b")
         val CONFIRM_UUID: UUID = UUID.fromString("36d4dc5c-814b-4097-a5a6-b93b39085928")
-
-
-        private val TX_CHAR = UUID.fromString("569a2000-b87f-490c-92cb-11ba5ea5167c")
-        private val RX_CHAR = UUID.fromString("569a2001-b87f-490c-92cb-11ba5ea5167c")
-//        private val BATTERY_UUID = UUID.fromString("0x2A19")
-
-        const val DUMMY_DEVICE_ADDRESS = "F1:79:17:94:03:7B"
     }
 }

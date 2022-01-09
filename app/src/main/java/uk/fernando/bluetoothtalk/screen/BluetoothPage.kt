@@ -29,6 +29,7 @@ import uk.fernando.bluetoothtalk.R
 import uk.fernando.bluetoothtalk.components.CustomButton
 import uk.fernando.bluetoothtalk.components.CustomSwitch
 import uk.fernando.bluetoothtalk.components.GenericDialog
+import uk.fernando.bluetoothtalk.components.snackbar.CustomSnackBar
 import uk.fernando.bluetoothtalk.ext.checkLocationPermission
 import uk.fernando.bluetoothtalk.navigation.Directions
 import uk.fernando.bluetoothtalk.theme.blueDark
@@ -42,64 +43,66 @@ import uk.fernando.bluetoothtalk.viewmodel.BluetoothViewModel
 fun BluetoothPage(navController: NavController = NavController(LocalContext.current), viewModel: BluetoothViewModel = hiltViewModel()) {
     var gpsDialog by remember { mutableStateOf(false) }
 
-    Box {
+    CustomSnackBar(snackBarSealed = viewModel.snackBar.value) {
 
-        Column(Modifier.fillMaxSize()) {
+        Box {
 
-            // Bluetooth Switch
-            CustomSwitch(modifier = Modifier.padding(top = 10.dp),
-                text = R.string.bluetooth_action,
-                isChecked = viewModel.isBluetoothOn,
-                onCheckedChange = { isON ->
-                    viewModel.enableDisableBle()
-                    viewModel.isBluetoothOn = isON
-                })
+            Column(Modifier.fillMaxSize()) {
 
-            if (viewModel.isBluetoothOn) {
+                // Bluetooth Switch
+                CustomSwitch(modifier = Modifier.padding(top = 10.dp),
+                    text = R.string.bluetooth_action,
+                    isChecked = viewModel.isBluetoothOn,
+                    onCheckedChange = { isON ->
+                        viewModel.enableDisableBle()
+                        viewModel.isBluetoothOn = isON
+                    })
 
-                ScanButton(
-                    navController = navController,
-                    onClick = viewModel::startScan,
-                    isScanning = viewModel.isScanning.value,
-                    showDialog = {
-                        gpsDialog = true
+                if (viewModel.isBluetoothOn) {
+
+                    ScanButton(
+                        navController = navController,
+                        onClick = viewModel::startScan,
+                        isScanning = viewModel.isScanning.value,
+                        showDialog = {
+                            gpsDialog = true
+                        }
+                    )
+
+                    // Lists
+                    Column(Modifier.verticalScroll(rememberScrollState())) {
+                        DeviceList(
+                            textId = R.string.my_devices,
+                            deviceList = viewModel.myDevices.value,
+                            onItemClick = {
+                                viewModel.connectToDevice(it)
+                            }
+                        )
+
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        DeviceList(
+                            textId = R.string.other_devices,
+                            deviceList = viewModel.otherDevices.value,
+                            onItemClick = {
+                                viewModel.connectToDevice(it)
+                            }
+                        )
+
+                        if (viewModel.devicesNotFound.value)
+                            DeviceNotFound()
                     }
-                )
+                }
+            }
 
-                // Lists
-                Column(Modifier.verticalScroll(rememberScrollState())) {
-                    DeviceList(
-                        textId = R.string.my_devices,
-                        deviceList = viewModel.myDevices.value,
-                        onItemClick = {
-                            viewModel.connectToDevice(it)
-                        }
-                    )
-
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    DeviceList(
-                        textId = R.string.other_devices,
-                        deviceList = viewModel.otherDevices.value,
-                        onItemClick = {
-                            viewModel.connectToDevice(it)
-                        }
-                    )
-
-                    if (viewModel.devicesNotFound.value)
-                        DeviceNotFound()
+            if (gpsDialog) {
+                val onDismiss = { gpsDialog = false }
+                Dialog(onDismissRequest = onDismiss) {
+                    GpsDialog(onDismiss = onDismiss)
                 }
             }
         }
-
-        if (gpsDialog) {
-            val onDismiss = { gpsDialog = false }
-            Dialog(onDismissRequest = onDismiss) {
-                GpsDialog(onDismiss = onDismiss)
-            }
-        }
     }
-
 }
 
 @Composable

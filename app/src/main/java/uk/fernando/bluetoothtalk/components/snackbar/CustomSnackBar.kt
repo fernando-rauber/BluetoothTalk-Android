@@ -17,8 +17,8 @@ fun CustomSnackBar(snackBarSealed: SnackBarSealed?, content: @Composable () -> U
     val scaffoldState = rememberScaffoldState()
 
     when (snackBarSealed) {
-        is SnackBarSealed.Success -> snackBarController.showSnackBar(scaffoldState = scaffoldState)
-        is SnackBarSealed.Error -> snackBarController.showSnackBar(scaffoldState = scaffoldState)
+        is SnackBarSealed.Success -> snackBarController.showSnackBar(scaffoldState = scaffoldState, longDuration = snackBarSealed.isLongDuration)
+        is SnackBarSealed.Error -> snackBarController.showSnackBar(scaffoldState = scaffoldState, longDuration = snackBarSealed.isLongDuration)
     }
 
     Box(modifier = Modifier.fillMaxSize()) {

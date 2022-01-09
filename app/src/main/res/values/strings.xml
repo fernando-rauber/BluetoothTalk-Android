@@ -25,5 +25,8 @@
     <string name="devices_not_found">Devices not found</string>
     <string name="gps_message">GPS must be on</string>
     <string name="message">Message</string>
+    <string name="connecting">Connecting</string>
+    <string name="disconnected">Disconnected</string>
+    <string name="connection_failed">Failed to conect</string>
 
 </resources>

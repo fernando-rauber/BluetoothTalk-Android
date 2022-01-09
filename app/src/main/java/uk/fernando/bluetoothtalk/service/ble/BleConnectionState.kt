@@ -6,4 +6,5 @@ sealed class BleConnectionState {
     object Connecting : BleConnectionState()
     class Connected(val device: BluetoothDevice) : BleConnectionState()
     object Disconnected : BleConnectionState()
+    object ConnectionFailed : BleConnectionState()
 }
