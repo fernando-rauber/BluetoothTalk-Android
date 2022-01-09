@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.*
@@ -25,6 +26,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.rememberImagePainter
 import coil.transform.CircleCropTransformation
+import kotlinx.coroutines.launch
 import uk.fernando.bluetoothtalk.R
 import uk.fernando.bluetoothtalk.database.entity.MessageEntity
 import uk.fernando.bluetoothtalk.database.entity.UserEntity
@@ -38,6 +40,8 @@ import uk.fernando.bluetoothtalk.viewmodel.ChatViewModel
 @Composable
 fun ChatPage(navController: NavController = NavController(LocalContext.current), userAddress: String = "", viewModel: ChatViewModel = hiltViewModel()) {
     viewModel.fetchMessages(userAddress)
+    val coroutine = rememberCoroutineScope()
+    val listState = rememberLazyListState()
 
     Column(Modifier.fillMaxSize()) {
 
@@ -46,7 +50,10 @@ fun ChatPage(navController: NavController = NavController(LocalContext.current),
             onBackClick = { navController.popBackStack() }
         )
 
-        LazyColumn(modifier = Modifier.weight(0.9f)) {
+        LazyColumn(
+            state = listState,
+            modifier = Modifier.weight(0.9f)
+        ) {
 
             items(viewModel.messageList.value) { message ->
                 ChatDialog(message)
@@ -54,8 +61,16 @@ fun ChatPage(navController: NavController = NavController(LocalContext.current),
         }
 
         BottomBar(onSendMessage = {
-            viewModel.sendMessage(it)
+            coroutine.launch {
+                viewModel.sendMessage(it)
+                listState.animateScrollToItem(viewModel.messageList.value.count() - 1)
+            }
         })
+
+        // Scroll to last message on the chat
+        coroutine.launch {
+            listState.animateScrollToItem(viewModel.messageList.value.count() - 1)
+        }
     }
 }
 

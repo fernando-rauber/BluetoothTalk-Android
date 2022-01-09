@@ -29,7 +29,7 @@ class BluetoothViewModel @Inject constructor(val context: BaseApplication, val r
     private var bluetoothService: BluetoothManager? = null
     private var bleManager: MyBleManagerScan? = null
 
-    var isBluetoothOn = MutableStateFlow(false)
+    val isBluetoothOn = MutableStateFlow(false)
     val isScanning = MutableStateFlow(false)
     val devicesNotFound = MutableStateFlow(false)
 
