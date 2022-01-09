@@ -46,6 +46,9 @@ fun BluetoothPage(navController: NavController = NavController(LocalContext.curr
     var gpsDialog by remember { mutableStateOf(false) }
     val coroutine = rememberCoroutineScope()
 
+    val bluetooth by viewModel.isBluetoothOn.collectAsState()
+    val isScanning by viewModel.isScanning.collectAsState()
+
     CustomSnackBar(snackBarSealed = viewModel.snackBar.value) {
 
         Box {
@@ -55,18 +58,18 @@ fun BluetoothPage(navController: NavController = NavController(LocalContext.curr
                 // Bluetooth Switch
                 CustomSwitch(modifier = Modifier.padding(top = 10.dp),
                     text = R.string.bluetooth_action,
-                    isChecked = viewModel.isBluetoothOn,
+                    isChecked = bluetooth,
                     onCheckedChange = { isON ->
                         viewModel.enableDisableBle()
-                        viewModel.isBluetoothOn = isON
+                        viewModel.isBluetoothOn.value = isON
                     })
 
-                if (viewModel.isBluetoothOn) {
+                if (bluetooth) {
 
                     ScanButton(
                         navController = navController,
                         onClick = viewModel::startScan,
-                        isScanning = viewModel.isScanning.value,
+                        isScanning = isScanning,
                         showDialog = {
                             gpsDialog = true
                         }

@@ -3,10 +3,6 @@ package uk.fernando.bluetoothtalk.viewmodel
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
 import android.util.Log
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.core.content.getSystemService
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -33,17 +29,17 @@ class BluetoothViewModel @Inject constructor(val context: BaseApplication, val r
     private var bluetoothService: BluetoothManager? = null
     private var bleManager: MyBleManagerScan? = null
 
-    var isBluetoothOn by mutableStateOf(false)
-    val isScanning: MutableState<Boolean> = mutableStateOf(false)
-    val devicesNotFound = mutableStateOf(false)
+    var isBluetoothOn = MutableStateFlow(false)
+    val isScanning = MutableStateFlow(false)
+    val devicesNotFound = MutableStateFlow(false)
 
-    val myDevices: MutableState<List<BluetoothDevice>> = mutableStateOf(listOf())
-    val otherDevices: MutableState<List<BluetoothDevice>> = mutableStateOf(listOf())
+    val myDevices = MutableStateFlow<List<BluetoothDevice>>(listOf())
+    val otherDevices = MutableStateFlow<List<BluetoothDevice>>(listOf())
 
-    val navChat = MutableStateFlow<String>("")
+    val navChat = MutableStateFlow("")
 
     init {
-        bluetoothService = context.getSystemService<BluetoothManager>()
+        bluetoothService = context.getSystemService()
         bleManager = MyBleManagerScan(bluetoothService!!.adapter)
 
         initObservers()
@@ -71,15 +67,14 @@ class BluetoothViewModel @Inject constructor(val context: BaseApplication, val r
     }
 
     private fun initObservers() {
-        viewModelScope.launch {
-
+        launchDefault {
 
             // Scan Status Observer
             bleManager?.scanState?.collect { state ->
 
                 when (state) {
                     is BluetoothStatus -> {
-                        isBluetoothOn = state.isOn
+                        isBluetoothOn.value = state.isOn
                         if (state.isOn)
                             bleManager?.getPairedDevices()
                     }
@@ -91,13 +86,11 @@ class BluetoothViewModel @Inject constructor(val context: BaseApplication, val r
                     is NotFound -> devicesNotFound.value = state.notFound
                 }
             }
-
-
         }
     }
 
     private fun initObservers2() {
-        viewModelScope.launch {
+        launchDefault {
 
             // Device Connection Observer
             ChatServer.deviceConnectionState.collect { state ->
@@ -115,7 +108,9 @@ class BluetoothViewModel @Inject constructor(val context: BaseApplication, val r
                 }
             }
         }
-
     }
+
 }
+
+
 
