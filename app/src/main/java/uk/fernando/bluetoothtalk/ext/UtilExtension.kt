@@ -27,5 +27,11 @@ fun Context.checkLocationPermission(onGranted: () -> Unit, onNotGranted: () -> U
         onNotGranted()
     else
         onGranted()
+}
 
+fun getRandomUUIDString(length: Int = 5) : String {
+    val allowedChars = ('A'..'Z') + ('a'..'z') + ('0'..'9') + ("!@#$%&*")
+    return (1..length)
+        .map { allowedChars.random() }
+        .joinToString("")
 }

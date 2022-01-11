@@ -35,7 +35,7 @@ fun ChatListPage(navController: NavController = NavController(LocalContext.curre
 
         items(viewModel.chatList.value) { user ->
             UserChat(user = user){
-                navController.navigate(Directions.chat.name.plus("/${user.user.address}"))
+                navController.navigate(Directions.chat.name.plus("/${user.user.id}"))
             }
         }
     }

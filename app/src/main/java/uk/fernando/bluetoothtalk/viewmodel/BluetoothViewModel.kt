@@ -20,6 +20,9 @@ import uk.fernando.bluetoothtalk.service.ble.BleConnectionState.*
 import uk.fernando.bluetoothtalk.service.ble.BleScanState.*
 import uk.fernando.bluetoothtalk.service.ble.ChatServer
 import uk.fernando.bluetoothtalk.service.ble.MyBleManagerScan
+import uk.fernando.bluetoothtalk.service.model.BleResponse
+import uk.fernando.bluetoothtalk.service.model.ProfileModel
+import uk.fernando.bluetoothtalk.service.model.ResponseType
 import javax.inject.Inject
 
 
@@ -38,6 +41,7 @@ class BluetoothViewModel @Inject constructor(val context: BaseApplication, val r
 
     val navChat = MutableStateFlow("")
 
+    private var userID: String = ""
     init {
         bluetoothService = context.getSystemService()
         bleManager = MyBleManagerScan(bluetoothService!!.adapter)
@@ -98,9 +102,15 @@ class BluetoothViewModel @Inject constructor(val context: BaseApplication, val r
                     when (state) {
                         is Connecting -> snackBar.value = SnackBarSealed.Success(R.string.connecting, isLongDuration = true)
                         is Connected -> {
-                            repository.insertUser(UserEntity(state.device.address, state.device.name.orEmpty()))
-                            snackBar.value = SnackBarSealed.Success(messageText = "Connected to ${state.device.name}")
-                            navChat.value = state.device.address
+//                            val bleResponse = BleResponse(type = ResponseType.REQUEST_PROFILE.value)
+//
+//                            delay(2000)
+//                            ChatServer.sendMessage(bleResponse)
+                            ChatServer.setCurrentChatConnection(state.device)
+
+
+                            snackBar.value = SnackBarSealed.Success(messageText = "Connected to ${state.device.address}")
+                            //TODO send user to
                         }
                         is Disconnected -> snackBar.value = SnackBarSealed.Error(R.string.disconnected)
                         is ConnectionFailed -> snackBar.value = SnackBarSealed.Error(R.string.connection_failed)
@@ -109,6 +119,19 @@ class BluetoothViewModel @Inject constructor(val context: BaseApplication, val r
             }
         }
     }
+
+//    private fun initObservers3() {
+//        launchDefault {
+//            ChatServer.receivedMessage.collect { response ->
+//                if (response != null && response.type == ResponseType.PROFILE.value) {
+//                    Log.e(TAG, "initObservers3: profile ${response.profile?.userID}")
+//                    val profile = response.profile!!
+//                    repository.insertUser(UserEntity(profile.userID, profile.name, profile.photo))
+//                    navChat.value = profile.userID
+//                }
+//            }
+//        }
+//    }
 
 }
 

@@ -5,17 +5,17 @@ import androidx.room.PrimaryKey
 import java.io.Serializable
 import java.util.*
 
-@Entity(tableName = UserEntity.NAME)
-data class UserEntity(
+@Entity(tableName = ProfileEntity.NAME)
+data class ProfileEntity(
     @PrimaryKey
     var id: String,
 
-    val name: String,
+    val name: String = "",
     val image: String? = null
 
 ) : Serializable {
 
     companion object {
-        const val NAME = "user"
+        const val NAME = "profile"
     }
 }

@@ -2,20 +2,27 @@ package uk.fernando.bluetoothtalk.service.ble
 
 import android.app.Application
 import android.bluetooth.*
+import android.bluetooth.BluetoothGatt.CONNECTION_PRIORITY_HIGH
 import android.bluetooth.le.AdvertiseCallback
 import android.bluetooth.le.AdvertiseData
 import android.bluetooth.le.AdvertiseSettings
 import android.bluetooth.le.BluetoothLeAdvertiser
 import android.content.Context
+import android.os.Build
 import android.os.ParcelUuid
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.google.gson.Gson
 import kotlinx.coroutines.flow.MutableStateFlow
 import uk.fernando.bluetoothtalk.ext.TAG
 import uk.fernando.bluetoothtalk.service.ble.MyBleManagerScan.Companion.CONFIRM_UUID
 import uk.fernando.bluetoothtalk.service.ble.MyBleManagerScan.Companion.MESSAGE_UUID
 import uk.fernando.bluetoothtalk.service.ble.MyBleManagerScan.Companion.SERVICE_UUID
+import uk.fernando.bluetoothtalk.service.model.BleResponse
+import uk.fernando.bluetoothtalk.service.model.MessageResponseModel
+import uk.fernando.bluetoothtalk.service.model.ProfileModel
+import uk.fernando.bluetoothtalk.service.model.ResponseType
 
 object ChatServer {
 
@@ -41,7 +48,7 @@ object ChatServer {
     val connectionRequest = _connectionRequest as LiveData<BluetoothDevice>
 
     // for reporting the messages sent to the device
-    val receivedMessage = MutableStateFlow<String>("")
+    val receivedMessage = MutableStateFlow<BleResponse?>(null)
 
     private var gattServer: BluetoothGattServer? = null
     private var gattServerCallback: BluetoothGattServerCallback? = null
@@ -91,16 +98,17 @@ object ChatServer {
         gattClient = device.connectGatt(app, false, gattClientCallback)
     }
 
-    fun sendMessage(message: String): Boolean {
-        Log.d(TAG, "Send a message")
+    fun sendMessage(message: BleResponse): Boolean {
+        Log.e(TAG, "Send a message")
         messageCharacteristic?.let { characteristic ->
             characteristic.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
-
-            val messageBytes = message.toByteArray(Charsets.UTF_8)
+            val messageJson = Gson().toJson(message)
+            Log.e(TAG, "Gson***: $messageJson")
+            val messageBytes = messageJson.toByteArray(Charsets.UTF_8)
             characteristic.value = messageBytes
             gatt?.let {
                 val success = it.writeCharacteristic(messageCharacteristic)
-                Log.d(TAG, "onServicesDiscovered: message send: $success")
+                Log.e(TAG, "onServicesDiscovered: message send: $success")
                 if (success) {
                     //_messages.value = Message.LocalMessage(message)
                 }
@@ -174,9 +182,9 @@ object ChatServer {
             val isConnected = newState == BluetoothProfile.STATE_CONNECTED
             Log.d(TAG, "onConnectionStateChange: Server $device ${device.name} success: $isSuccess connected: $isConnected")
 
-            if (isSuccess && isConnected)
+            if (isSuccess && isConnected) {
                 deviceConnectionState.tryEmit(BleConnectionState.Connected(device))
-            else if (!isSuccess && !isConnected)
+            } else if (!isSuccess && !isConnected)
                 deviceConnectionState.tryEmit(BleConnectionState.Disconnected)
             else
                 deviceConnectionState.tryEmit(BleConnectionState.ConnectionFailed)
@@ -189,16 +197,25 @@ object ChatServer {
             if (characteristic.uuid == MESSAGE_UUID) {
                 gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, 0, null)
                 val message = value?.toString(Charsets.UTF_8)
-                Log.d(TAG, "onCharacteristicWriteRequest: Have message: \"$message\"")
+                Log.e(TAG, "onCharacteristicWriteRequest: Have message: \"$message\"")
                 message?.let {
-                    receivedMessage.value = message
-                    //TODO
+                    Log.e(TAG, "fromJson: $it")
+                    val response = Gson().fromJson(it, BleResponse::class.java)
+
+//                    if (response.type == ResponseType.REQUEST_PROFILE.value) {
+////                        val profile = repository.getProfile()
+//                        val profileModel = ProfileModel(userID = "profile.id", name = "profile.name")
+//                        val bleResponse = BleResponse(type = ResponseType.PROFILE.value, profile = profileModel)
+//                        sendMessage(bleResponse)
+//                    } else
+                        receivedMessage.value = response
                 }
             }
         }
     }
 
     private class GattClientCallback : BluetoothGattCallback() {
+
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
             super.onConnectionStateChange(gatt, status, newState)
             val isSuccess = status == BluetoothGatt.GATT_SUCCESS
@@ -208,8 +225,17 @@ object ChatServer {
             // try to send a message to the other device as a test
             if (isSuccess && isConnected) {
                 // discover services
-                gatt.discoverServices()
+                gatt.requestConnectionPriority(CONNECTION_PRIORITY_HIGH)
+                gatt.requestMtu(400)
+//                gatt.discoverServices()
             }
+        }
+
+        override fun onMtuChanged(gatt: BluetoothGatt?, mtu: Int, status: Int) {
+            super.onMtuChanged(gatt, mtu, status)
+            Log.d(TAG, "onMtuChanged $mtu")
+
+            gatt!!.discoverServices()
         }
 
         override fun onServicesDiscovered(discoveredGatt: BluetoothGatt, status: Int) {

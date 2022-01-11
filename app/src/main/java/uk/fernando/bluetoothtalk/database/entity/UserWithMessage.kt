@@ -8,6 +8,6 @@ data class UserWithMessage (
 
     @Embedded val user: UserEntity,
 
-    @Relation(parentColumn = "address", entityColumn = "user_address", entity = MessageEntity::class)
+    @Relation(parentColumn = "id", entityColumn = "user_id", entity = MessageEntity::class)
     val messageList: List<MessageEntity>
 ) : Serializable

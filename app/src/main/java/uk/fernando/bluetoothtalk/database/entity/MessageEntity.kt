@@ -9,7 +9,7 @@ import java.util.*
 
 @Entity(
     tableName = MessageEntity.NAME,
-    foreignKeys = [ForeignKey(entity = UserEntity::class, parentColumns = ["address"], childColumns = ["user_address"])]
+    foreignKeys = [ForeignKey(entity = UserEntity::class, parentColumns = ["id"], childColumns = ["user_id"])]
 )
 data class MessageEntity(
     @PrimaryKey(autoGenerate = true)
@@ -18,8 +18,9 @@ data class MessageEntity(
     val message: String,
     val date: Date = Date(),
     val byMe: Boolean = false,
-    @ColumnInfo(name = "user_address")
-    val userAddress: String
+    val sent: Boolean = false,
+    @ColumnInfo(name = "user_id", index = true)
+    val userId: String
 
 ) : Serializable {
 

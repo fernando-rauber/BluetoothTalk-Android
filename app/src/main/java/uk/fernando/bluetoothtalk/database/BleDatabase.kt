@@ -6,6 +6,7 @@ import androidx.room.TypeConverters
 import uk.fernando.bluetoothtalk.database.converter.DateTypeConverter
 import uk.fernando.bluetoothtalk.database.dao.BleDao
 import uk.fernando.bluetoothtalk.database.entity.MessageEntity
+import uk.fernando.bluetoothtalk.database.entity.ProfileEntity
 import uk.fernando.bluetoothtalk.database.entity.UserEntity
 
 
@@ -13,7 +14,8 @@ import uk.fernando.bluetoothtalk.database.entity.UserEntity
 @Database(
     version = DATABASE_VERSION,
     exportSchema = false,
-    entities = [UserEntity::class, MessageEntity::class]
+    entities = [UserEntity::class, ProfileEntity::class,
+        MessageEntity::class]
 )
 abstract class BleDatabase : RoomDatabase() {
 
