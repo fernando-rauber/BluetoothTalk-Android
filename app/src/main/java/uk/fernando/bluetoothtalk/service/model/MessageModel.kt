@@ -3,8 +3,8 @@ package uk.fernando.bluetoothtalk.service.model
 enum class ResponseType(val value: Int) {
     MESSAGE(1),
     MESSAGE_RESPONSE(2),
-    PROFILE(3),
-    REQUEST_PROFILE(4)
+    PROFILE(3)
+//    REQUEST_PROFILE(4)
 }
 
 data class BleResponse(

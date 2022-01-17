@@ -13,16 +13,12 @@ import kotlinx.coroutines.launch
 import uk.fernando.bluetoothtalk.BaseApplication
 import uk.fernando.bluetoothtalk.R
 import uk.fernando.bluetoothtalk.components.snackbar.SnackBarSealed
-import uk.fernando.bluetoothtalk.database.entity.UserEntity
 import uk.fernando.bluetoothtalk.ext.TAG
 import uk.fernando.bluetoothtalk.repository.MessageRepository
 import uk.fernando.bluetoothtalk.service.ble.BleConnectionState.*
 import uk.fernando.bluetoothtalk.service.ble.BleScanState.*
 import uk.fernando.bluetoothtalk.service.ble.ChatServer
 import uk.fernando.bluetoothtalk.service.ble.MyBleManagerScan
-import uk.fernando.bluetoothtalk.service.model.BleResponse
-import uk.fernando.bluetoothtalk.service.model.ProfileModel
-import uk.fernando.bluetoothtalk.service.model.ResponseType
 import javax.inject.Inject
 
 
@@ -97,7 +93,7 @@ class BluetoothViewModel @Inject constructor(val context: BaseApplication, val r
         launchDefault {
 
             // Device Connection Observer
-            ChatServer.deviceConnectionState.collect { state ->
+            ChatServer.clientConnectionState.collect { state ->
                 state?.let {
                     when (state) {
                         is Connecting -> snackBar.value = SnackBarSealed.Success(R.string.connecting, isLongDuration = true)
@@ -106,7 +102,7 @@ class BluetoothViewModel @Inject constructor(val context: BaseApplication, val r
 //
 //                            delay(2000)
 //                            ChatServer.sendMessage(bleResponse)
-                            ChatServer.setCurrentChatConnection(state.device)
+//                            ChatServer.setCurrentChatConnection(state.device)
 
 
                             snackBar.value = SnackBarSealed.Success(messageText = "Connected to ${state.device.address}")

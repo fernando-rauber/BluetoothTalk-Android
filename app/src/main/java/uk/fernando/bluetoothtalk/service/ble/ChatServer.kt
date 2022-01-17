@@ -8,7 +8,6 @@ import android.bluetooth.le.AdvertiseData
 import android.bluetooth.le.AdvertiseSettings
 import android.bluetooth.le.BluetoothLeAdvertiser
 import android.content.Context
-import android.os.Build
 import android.os.ParcelUuid
 import android.util.Log
 import androidx.lifecycle.LiveData
@@ -20,9 +19,6 @@ import uk.fernando.bluetoothtalk.service.ble.MyBleManagerScan.Companion.CONFIRM_
 import uk.fernando.bluetoothtalk.service.ble.MyBleManagerScan.Companion.MESSAGE_UUID
 import uk.fernando.bluetoothtalk.service.ble.MyBleManagerScan.Companion.SERVICE_UUID
 import uk.fernando.bluetoothtalk.service.model.BleResponse
-import uk.fernando.bluetoothtalk.service.model.MessageResponseModel
-import uk.fernando.bluetoothtalk.service.model.ProfileModel
-import uk.fernando.bluetoothtalk.service.model.ResponseType
 
 object ChatServer {
 
@@ -63,7 +59,8 @@ object ChatServer {
     private var messageCharacteristic: BluetoothGattCharacteristic? = null
 
     // fires off every time value of the property changes
-    val deviceConnectionState = MutableStateFlow<BleConnectionState?>(null)
+    val clientConnectionState = MutableStateFlow<BleConnectionState?>(null)
+    val serverConnectionState = MutableStateFlow<BleConnectionState?>(null)
 
 
     fun startServer(app: Application) {
@@ -89,7 +86,7 @@ object ChatServer {
     fun setCurrentChatConnection(device: BluetoothDevice) {
         currentDevice = device
 
-        deviceConnectionState.tryEmit(BleConnectionState.Connecting)
+        clientConnectionState.tryEmit(BleConnectionState.Connecting)
         connectToChatDevice(device)
     }
 
@@ -183,12 +180,9 @@ object ChatServer {
             Log.d(TAG, "onConnectionStateChange: Server $device ${device.name} success: $isSuccess connected: $isConnected")
 
             if (isSuccess && isConnected) {
-                deviceConnectionState.tryEmit(BleConnectionState.Connected(device))
-            } else if (!isSuccess && !isConnected)
-                deviceConnectionState.tryEmit(BleConnectionState.Disconnected)
-            else
-                deviceConnectionState.tryEmit(BleConnectionState.ConnectionFailed)
-
+                serverConnectionState.tryEmit(BleConnectionState.Connected(device))
+            } else
+                serverConnectionState.tryEmit(BleConnectionState.Disconnected)
         }
 
         override fun onCharacteristicWriteRequest(device: BluetoothDevice, requestId: Int, characteristic: BluetoothGattCharacteristic, preparedWrite: Boolean, responseNeeded: Boolean, offset: Int, value: ByteArray?) {
@@ -197,9 +191,8 @@ object ChatServer {
             if (characteristic.uuid == MESSAGE_UUID) {
                 gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, 0, null)
                 val message = value?.toString(Charsets.UTF_8)
-                Log.e(TAG, "onCharacteristicWriteRequest: Have message: \"$message\"")
                 message?.let {
-                    Log.e(TAG, "fromJson: $it")
+                    Log.e(TAG, "Message from JSON: $it")
                     val response = Gson().fromJson(it, BleResponse::class.java)
 
 //                    if (response.type == ResponseType.REQUEST_PROFILE.value) {
@@ -208,7 +201,7 @@ object ChatServer {
 //                        val bleResponse = BleResponse(type = ResponseType.PROFILE.value, profile = profileModel)
 //                        sendMessage(bleResponse)
 //                    } else
-                        receivedMessage.value = response
+                    receivedMessage.value = response
                 }
             }
         }
@@ -223,12 +216,20 @@ object ChatServer {
             Log.d(TAG, "onConnectionStateChange: Client $gatt  success: $isSuccess connected: $isConnected")
 
             // try to send a message to the other device as a test
+
             if (isSuccess && isConnected) {
+                Log.e(TAG, "GattClientCallback: Client $gatt  success: $isSuccess connected: $isConnected")
                 // discover services
                 gatt.requestConnectionPriority(CONNECTION_PRIORITY_HIGH)
                 gatt.requestMtu(400)
 //                gatt.discoverServices()
             }
+            if (isSuccess && isConnected) {
+                clientConnectionState.tryEmit(BleConnectionState.Connected(currentDevice!!))
+            } else if (!isSuccess && !isConnected)
+                clientConnectionState.tryEmit(BleConnectionState.Disconnected)
+            else
+                clientConnectionState.tryEmit(BleConnectionState.ConnectionFailed)
         }
 
         override fun onMtuChanged(gatt: BluetoothGatt?, mtu: Int, status: Int) {

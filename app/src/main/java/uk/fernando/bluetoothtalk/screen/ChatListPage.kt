@@ -76,7 +76,6 @@ private fun UserChat(user: UserWithMessage, onClick: () -> Unit = {}) {
             Text(
                 text = user.user.name,
                 fontWeight = FontWeight.Bold,
-                color = Color.Black,
                 fontSize = 16.sp
             )
 

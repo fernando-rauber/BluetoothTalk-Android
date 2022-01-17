@@ -6,11 +6,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.Button
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Scaffold
-import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
@@ -28,7 +25,6 @@ import uk.fernando.bluetoothtalk.ext.TAG
 import uk.fernando.bluetoothtalk.navigation.Directions
 import uk.fernando.bluetoothtalk.navigation.buildGraph
 import uk.fernando.bluetoothtalk.repository.MessageRepository
-import uk.fernando.bluetoothtalk.service.ServiceBinderLifecycleObserver
 import uk.fernando.bluetoothtalk.service.ble.ChatServer
 import uk.fernando.bluetoothtalk.service.model.*
 import uk.fernando.bluetoothtalk.theme.MyTheme
@@ -74,14 +70,6 @@ class MainActivity : ComponentActivity() {
                         ) {
                             buildGraph(controller)
                         }
-
-                        Button(onClick = {
-                            val bleResponse = BleResponse(type = ResponseType.REQUEST_PROFILE.value)
-                            ChatServer.sendMessage(bleResponse)
-
-                        }) {
-                            Text(text = "Click me please")
-                        }
                     }
 
                 }
@@ -95,23 +83,26 @@ class MainActivity : ComponentActivity() {
                 response?.let {
                     when (it.type) {
                         ResponseType.MESSAGE.value -> insertReceivedMessage(it.message!!)
+
                         ResponseType.MESSAGE_RESPONSE.value -> repository.updateMessageToSent(it.messageResponse!!.messageID)
+
                         ResponseType.PROFILE.value -> {
                             Log.e(TAG, "PROFILE received: ${response.profile?.userID}")
                             val profile = response.profile!!
                             repository.insertUser(UserEntity(profile.userID, profile.name, profile.photo))
                         }
-                        ResponseType.REQUEST_PROFILE.value -> {
-                            Log.e(TAG, "REQUEST_PROFILE: profile")
-                            val profile = repository.getProfile()
-                            val profileModel = ProfileModel(userID = profile.id, name = profile.name)
-                            val bleResponse = BleResponse(type = ResponseType.PROFILE.value, profile = profileModel)
-                            delay(200)
-                            ChatServer.sendMessage(bleResponse)
-                            Log.e(TAG, "REQUEST_PROFILE: sent")
 
-                            //navChat.value = profile.userID
-                        }
+//                        ResponseType.REQUEST_PROFILE.value -> {
+//                            Log.e(TAG, "REQUEST_PROFILE: profile")
+//                            val profile = repository.getProfile()
+//                            val profileModel = ProfileModel(userID = profile.id, name = profile.name)
+//                            val bleResponse = BleResponse(type = ResponseType.PROFILE.value, profile = profileModel)
+//                            delay(200)
+//                            ChatServer.sendMessage(bleResponse)
+//                            Log.e(TAG, "REQUEST_PROFILE: sent")
+//
+//                            //navChat.value = profile.userID
+//                        }
                     }
                 }
             }
@@ -119,19 +110,13 @@ class MainActivity : ComponentActivity() {
     }
 
     private suspend fun insertReceivedMessage(message: MessageModel) {
-        Log.d(TAG, " Have message: \"${message.message}\"")
+        Log.e(TAG, " New message: \"${message.message}\"")
         repository.insertMessage(MessageEntity(message = message.message, userId = message.userID))
 
-        val messageResponse = MessageResponseModel(messageID = message.messageID, hasReceived = true)
-        val bleResponse = BleResponse(type = ResponseType.MESSAGE_RESPONSE.value, messageResponse = messageResponse)
-
-        // Send response says that received message
-        ChatServer.sendMessage(bleResponse)
+//        val messageResponse = MessageResponseModel(messageID = message.messageID, hasReceived = true)
+//        val bleResponse = BleResponse(type = ResponseType.MESSAGE_RESPONSE.value, messageResponse = messageResponse)
+//
+//        // Send response says that received message
+//        ChatServer.sendMessage(bleResponse)
     }
-}
-
-
-@Composable
-fun Greeting(name: String) {
-    Text(text = "Hello $name!")
 }
