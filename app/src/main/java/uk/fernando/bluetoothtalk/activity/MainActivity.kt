@@ -30,6 +30,7 @@ import uk.fernando.bluetoothtalk.ext.TAG
 import uk.fernando.bluetoothtalk.navigation.Directions
 import uk.fernando.bluetoothtalk.navigation.buildGraph
 import uk.fernando.bluetoothtalk.repository.MessageRepository
+import uk.fernando.bluetoothtalk.repository.UserRepository
 import uk.fernando.bluetoothtalk.service.ble.BleConnectionState
 import uk.fernando.bluetoothtalk.service.ble.ChatServer
 import uk.fernando.bluetoothtalk.service.model.BleResponse
@@ -55,7 +56,8 @@ class MainActivity : ComponentActivity() {
 
         setContent {
 
-            val repository: MessageRepository by inject()
+            val userRep: UserRepository by inject()
+            val msgRep: MessageRepository by inject()
 
 
             val controller = rememberNavController()
@@ -63,14 +65,14 @@ class MainActivity : ComponentActivity() {
             val statusDialog by remember { mutableStateOf(mutableListOf<String>()) }
             var showDialog by remember { mutableStateOf(0) }
 
-            messagesObserver(repository) {
+            messagesObserver(userRep, msgRep) {
                 statusDialog.clear()
                 showDialog = 0
 
                 controller.navigate(it)
             }
 
-            clientObserver(repository) {
+            clientObserver(userRep) {
                 Log.e(TAG, "onCreate1: $it")
                 showDialog++
                 statusDialog.add(it)
@@ -110,19 +112,19 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun messagesObserver(repository: MessageRepository, navigate: (String) -> Unit) {
+    private fun messagesObserver(userRep: UserRepository, msgRep: MessageRepository, navigate: (String) -> Unit) {
         lifecycleScope.launch {
             ChatServer.receivedMessage.collect { response ->
                 response?.let {
                     when (it.type) {
-                        ResponseType.MESSAGE.value -> insertReceivedMessage(repository, it.message!!)
+                        ResponseType.MESSAGE.value -> insertReceivedMessage(msgRep, it.message!!)
 
-                        ResponseType.MESSAGE_RESPONSE.value -> repository.updateMessageToSent(it.messageResponse!!.messageID)
+                        ResponseType.MESSAGE_RESPONSE.value -> msgRep.updateMessageToSent(it.messageResponse!!.messageID)
 
                         ResponseType.PROFILE.value -> {
                             Log.e(TAG, "PROFILE received: ${response.profile?.userID}")
                             val profile = response.profile!!
-                            repository.insertUser(UserEntity(profile.userID, profile.name, profile.photo))
+                            userRep.insertUser(UserEntity(profile.userID, profile.name, profile.photo))
                             Log.e(TAG, "PROFILE added")
                             ChatServer.connectToCurrentUser()
 
@@ -147,7 +149,7 @@ class MainActivity : ComponentActivity() {
     }
 
 
-    private fun clientObserver(repository: MessageRepository, onStatusChange: (String) -> Unit) {
+    private fun clientObserver(userRep: UserRepository, onStatusChange: (String) -> Unit) {
         lifecycleScope.launch {
 
             // Device Connection Observer
@@ -160,7 +162,7 @@ class MainActivity : ComponentActivity() {
                             onStatusChange("Requesting device ${state.device}'s connection")
 
                             Log.e(TAG, "REQUEST_PROFILE: profile")
-                            val profile = repository.getProfile()
+                            val profile = userRep.getProfile()
                             val profileModel = ProfileModel(userID = profile.id, name = profile.name)
                             val bleResponse = BleResponse(type = ResponseType.PROFILE.value, profile = profileModel)
                             delay(1000)
@@ -207,9 +209,9 @@ class MainActivity : ComponentActivity() {
 //        }
 //    }
 
-    private suspend fun insertReceivedMessage(repository: MessageRepository, message: MessageModel) {
+    private suspend fun insertReceivedMessage(msgRep: MessageRepository, message: MessageModel) {
         Log.e(TAG, " New message: \"${message.message}\"")
-        repository.insertMessage(MessageEntity(message = message.message, userId = message.userID))
+        msgRep.insertMessage(MessageEntity(message = message.message, userId = message.userID))
 
 //        val messageResponse = MessageResponseModel(messageID = message.messageID, hasReceived = true)
 //        val bleResponse = BleResponse(type = ResponseType.MESSAGE_RESPONSE.value, messageResponse = messageResponse)

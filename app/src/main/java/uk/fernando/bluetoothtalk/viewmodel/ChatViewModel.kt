@@ -7,13 +7,14 @@ import uk.fernando.bluetoothtalk.database.entity.MessageEntity
 import uk.fernando.bluetoothtalk.database.entity.ProfileEntity
 import uk.fernando.bluetoothtalk.database.entity.UserEntity
 import uk.fernando.bluetoothtalk.repository.MessageRepository
+import uk.fernando.bluetoothtalk.repository.UserRepository
 import uk.fernando.bluetoothtalk.service.ble.ChatServer
 import uk.fernando.bluetoothtalk.service.model.BleResponse
 import uk.fernando.bluetoothtalk.service.model.MessageModel
 import uk.fernando.bluetoothtalk.service.model.ResponseType
 
 
-class ChatViewModel (private val repository: MessageRepository) : BaseViewModel() {
+class ChatViewModel(private val userRep: UserRepository, private val msgRep: MessageRepository) : BaseViewModel() {
 
     private var userID: String = ""
     val user: MutableState<UserEntity?> = mutableStateOf(null)
@@ -28,11 +29,11 @@ class ChatViewModel (private val repository: MessageRepository) : BaseViewModel(
 
         launchDefault {
 
-            userProfile = repository.getProfile()
+            userProfile = userRep.getProfile()
 
-            user.value = repository.getUserById(userID)
+            user.value = userRep.getUserById(userID)
 
-            repository.getMessagesByUser(userID).collect {
+            msgRep.getMessagesByUser(userID).collect {
                 messageList.value = it
             }
         }
@@ -47,7 +48,7 @@ class ChatViewModel (private val repository: MessageRepository) : BaseViewModel(
 
     fun sendMessage(message: String) {
         launchIO {
-            val messageID = repository.insertMessage(MessageEntity(message = message, byMe = true, userId = userID))
+            val messageID = msgRep.insertMessage(MessageEntity(message = message, byMe = true, userId = userID))
 
             val msg = MessageModel(messageID = messageID, message = message, userID = userProfile.id)
             val bleResponse = BleResponse(type = ResponseType.MESSAGE.value, message = msg)
@@ -55,6 +56,5 @@ class ChatViewModel (private val repository: MessageRepository) : BaseViewModel(
             ChatServer.sendMessage(bleResponse)
         }
     }
-
 
 }

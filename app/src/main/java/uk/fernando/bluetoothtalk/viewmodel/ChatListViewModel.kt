@@ -6,10 +6,10 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import uk.fernando.bluetoothtalk.database.entity.UserWithMessage
-import uk.fernando.bluetoothtalk.repository.MessageRepository
+import uk.fernando.bluetoothtalk.repository.UserRepository
 
 
-class ChatListViewModel (repository: MessageRepository) : BaseViewModel() {
+class ChatListViewModel(repository: UserRepository) : BaseViewModel() {
 
     val chatList: MutableState<List<UserWithMessage>> = mutableStateOf(listOf())
 

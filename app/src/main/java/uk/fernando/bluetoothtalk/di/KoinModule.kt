@@ -9,9 +9,11 @@ import org.koin.core.module.Module
 import org.koin.dsl.module
 import uk.fernando.bluetoothtalk.database.BleDatabase
 import uk.fernando.bluetoothtalk.repository.MessageRepository
+import uk.fernando.bluetoothtalk.repository.UserRepository
 import uk.fernando.bluetoothtalk.viewmodel.BluetoothViewModel
 import uk.fernando.bluetoothtalk.viewmodel.ChatListViewModel
 import uk.fernando.bluetoothtalk.viewmodel.ChatViewModel
+import uk.fernando.bluetoothtalk.viewmodel.SettingsViewModel
 
 object KoinModule {
 
@@ -39,6 +41,7 @@ object KoinModule {
         get() = module {
 
             factory { MessageRepository(get()) }
+            factory { UserRepository(get()) }
 
         }
 
@@ -46,8 +49,9 @@ object KoinModule {
         get() = module {
 
             viewModel { BluetoothViewModel(androidApplication()) }
-            viewModel { ChatViewModel(get()) }
+            viewModel { ChatViewModel(get(), get()) }
             viewModel { ChatListViewModel(get()) }
+            viewModel { SettingsViewModel(get()) }
 
         }
 
