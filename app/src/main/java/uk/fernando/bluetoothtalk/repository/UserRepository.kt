@@ -16,6 +16,12 @@ class UserRepository(private val dao: BleDao) {
         }
     }
 
+    suspend fun updateProfile(user: ProfileEntity) {
+        withContext(Dispatchers.IO) {
+            dao.update(user)
+        }
+    }
+
     suspend fun getProfile() = withContext(Dispatchers.IO) {
         val profile = dao.getProfile()
         if (profile != null)

@@ -3,10 +3,14 @@ package uk.fernando.bluetoothtalk.ext
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import android.net.Uri
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.annotation.IdRes
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.navigation.NavController
+import uk.fernando.bluetoothtalk.BuildConfig
+import java.io.File
 
 val Any.TAG: String
     get() {
@@ -27,6 +31,24 @@ fun Context.checkLocationPermission(onGranted: () -> Unit, onNotGranted: () -> U
         onNotGranted()
     else
         onGranted()
+}
+
+fun Context.checkCameraPermission(activityResult: ManagedActivityResultLauncher<String, Boolean>, execute: () -> Unit) {
+    // Check for permission
+    if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+        activityResult.launch(Manifest.permission.CAMERA)
+    } else {
+        execute()
+    }
+}
+
+fun Context.getTmpFileUri(): Uri {
+    val tmpFile = File.createTempFile("tmp_image_file", ".png", this.cacheDir).apply {
+        createNewFile()
+        deleteOnExit()
+    }
+
+    return FileProvider.getUriForFile(this.applicationContext, "${BuildConfig.APPLICATION_ID}.provider", tmpFile)
 }
 
 fun getRandomUUIDString(length: Int = 5) : String {

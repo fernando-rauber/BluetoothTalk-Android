@@ -28,5 +28,10 @@
     <string name="connecting">Connecting</string>
     <string name="disconnected">Disconnected</string>
     <string name="connection_failed">Failed to conect</string>
+    <string name="import_library_action">Import from Library</string>
+    <string name="take_photo_action">Take Photo</string>
+    <string name="save_changes_action">Save Changes</string>
+    <string name="name_placeholder">Name</string>
+    <string name="changes_saved">Saved</string>
 
 </resources>

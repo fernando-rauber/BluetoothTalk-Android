@@ -18,4 +18,5 @@ val orange = Color(0xFFF9B000)
 val whiteBackGround = Color(0xFFf9f9f9)
 val brownGrey = Color(0xFF959595)
 
+val steel = Color(0xFF8A8B99)
 val dark = Color(0xFF0A0A0A)

@@ -40,6 +40,9 @@ interface BleDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(item: ProfileEntity)
 
+    @Update
+    fun update(item: ProfileEntity)
+
     @Query("SELECT * FROM ${ProfileEntity.NAME} LIMIT 1")
     fun getProfile(): ProfileEntity?
 

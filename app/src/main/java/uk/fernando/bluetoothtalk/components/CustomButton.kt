@@ -36,7 +36,7 @@ fun CustomButton(
         border = borderStroke,
         modifier = modifier,
         enabled = enabled,
-        shape = RoundedCornerShape(percent = 50),
+        shape = RoundedCornerShape(percent = 25),
         colors = ButtonDefaults.buttonColors(backgroundColor = color, disabledBackgroundColor = greySuperLight),
         elevation = elevation,
         contentPadding = contentPadding,
