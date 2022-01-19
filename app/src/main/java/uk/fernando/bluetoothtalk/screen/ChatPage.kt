@@ -54,23 +54,22 @@ fun ChatPage(navController: NavController = NavController(LocalContext.current),
             state = listState,
             modifier = Modifier.weight(0.9f)
         ) {
-
             items(viewModel.messageList.value) { message ->
                 ChatDialog(message)
+            }
+
+            // Scroll to last message on the chat
+            coroutine.launch {
+                listState.animateScrollToItem(viewModel.messageList.value.count() - 1)
             }
         }
 
         BottomBar(onSendMessage = {
             coroutine.launch {
                 viewModel.sendMessage(it)
-                listState.animateScrollToItem(viewModel.messageList.value.count() - 1)
             }
         })
 
-        // Scroll to last message on the chat
-        coroutine.launch {
-            listState.animateScrollToItem(viewModel.messageList.value.count() - 1)
-        }
     }
 }
 
