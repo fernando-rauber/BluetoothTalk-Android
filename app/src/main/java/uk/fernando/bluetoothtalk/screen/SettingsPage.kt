@@ -1,5 +1,6 @@
 package uk.fernando.bluetoothtalk.screen
 
+import android.content.Context
 import android.net.Uri
 import android.webkit.MimeTypeMap
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -40,8 +41,25 @@ import uk.fernando.bluetoothtalk.theme.dark
 import uk.fernando.bluetoothtalk.theme.steel
 import uk.fernando.bluetoothtalk.viewmodel.SettingsViewModel
 import java.io.File
+import java.io.FileInputStream
 import java.io.InputStream
 import java.util.*
+
+private fun storeFileInInternalStorage(application: Context, selectedFile: File, internalStorageFileName: String) {
+    val inputStream = FileInputStream(selectedFile) // 1
+    val outputStream = application.openFileOutput(internalStorageFileName, Context.MODE_PRIVATE)  // 2
+    val buffer = ByteArray(1024)
+    inputStream.use {  // 3
+        while (true) {
+            val byeCount = it.read(buffer)  // 4
+            if (byeCount < 0) break
+            outputStream.write(buffer, 0, byeCount)  // 5
+        }
+        outputStream.close()  // 6
+    }
+
+}
+
 
 @ExperimentalCoilApi
 @ExperimentalMaterialApi
@@ -54,6 +72,7 @@ fun SettingsPage(navController: NavController = NavController(LocalContext.curre
     val bottomSheetScaffoldState = rememberBottomSheetScaffoldState(bottomSheetState = rememberBottomSheetState(initialValue = BottomSheetValue.Collapsed))
 
     val pickImageResult = rememberLauncherForActivityResult(contract = ActivityResultContracts.GetContent()) { uri: Uri? ->
+
         viewModel.photoURI.value = uri
         coroutine.launch { bottomSheetScaffoldState.bottomSheetState.collapse() }
     }

@@ -19,6 +19,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -30,13 +31,14 @@ import org.koin.androidx.compose.getViewModel
 import uk.fernando.bluetoothtalk.R
 import uk.fernando.bluetoothtalk.database.entity.MessageEntity
 import uk.fernando.bluetoothtalk.database.entity.UserEntity
+import uk.fernando.bluetoothtalk.ext.formatToTime
 import uk.fernando.bluetoothtalk.theme.blue
 import uk.fernando.bluetoothtalk.theme.green
 import uk.fernando.bluetoothtalk.theme.greyDark
 import uk.fernando.bluetoothtalk.theme.greyLight2
 import uk.fernando.bluetoothtalk.viewmodel.ChatViewModel
+import java.util.*
 
-@Preview(showBackground = true)
 @Composable
 fun ChatPage(navController: NavController = NavController(LocalContext.current), userAddress: String = "", viewModel: ChatViewModel = getViewModel()) {
     viewModel.fetchMessages(userAddress)
@@ -178,8 +180,9 @@ private fun BottomBar(onSendMessage: (String) -> Unit) {
     }
 }
 
+@Preview(showBackground = true)
 @Composable
-private fun ChatDialog(message: MessageEntity) {
+private fun ChatDialog(message: MessageEntity = MessageEntity(null, "messag dd3", Date(), false, true, "")) {
     Box(
         Modifier
             .fillMaxWidth()
@@ -198,10 +201,25 @@ private fun ChatDialog(message: MessageEntity) {
                 color = if (message.byMe) green else blue,
                 shape = getRoundedCorner(message.byMe)
             ) {
-                Text(
-                    text = message.message,
-                    modifier = Modifier.padding(10.dp)
-                )
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Text(
+                        text = message.message,
+                        modifier = Modifier
+                            .padding(start = 10.dp)
+                            .padding(vertical = 10.dp)
+                            .weight(1f)
+                    )
+
+                    Text(
+                        text = message.date.formatToTime(),
+                        fontSize = 9.sp,
+                        color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f),
+                        textAlign = TextAlign.End,
+                        modifier = Modifier
+                            .padding(end = 9.dp, bottom = 5.dp)
+                            .weight(0.15f)
+                    )
+                }
             }
         }
 
@@ -209,8 +227,9 @@ private fun ChatDialog(message: MessageEntity) {
 }
 
 private fun getRoundedCorner(byMe: Boolean): Shape {
+    val round = 15
     return if (byMe)
-        RoundedCornerShape(30, 30, 0, 30)
+        RoundedCornerShape(round, round, 0, round)
     else
-        RoundedCornerShape(30, 30, 30, 0)
+        RoundedCornerShape(round, round, round, 0)
 }
