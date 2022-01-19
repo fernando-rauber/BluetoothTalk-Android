@@ -1,29 +1,24 @@
 package uk.fernando.bluetoothtalk.viewmodel
 
+import android.app.Application
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
 import android.util.Log
 import androidx.core.content.getSystemService
 import androidx.lifecycle.viewModelScope
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import uk.fernando.bluetoothtalk.BaseApplication
-import uk.fernando.bluetoothtalk.R
-import uk.fernando.bluetoothtalk.components.snackbar.SnackBarSealed
 import uk.fernando.bluetoothtalk.ext.TAG
 import uk.fernando.bluetoothtalk.repository.MessageRepository
-import uk.fernando.bluetoothtalk.service.ble.BleConnectionState.*
 import uk.fernando.bluetoothtalk.service.ble.BleScanState.*
 import uk.fernando.bluetoothtalk.service.ble.ChatServer
 import uk.fernando.bluetoothtalk.service.ble.MyBleManagerScan
-import javax.inject.Inject
 
 
-@HiltViewModel
-class BluetoothViewModel @Inject constructor(val context: BaseApplication, val repository: MessageRepository) : BaseViewModel() {
+class BluetoothViewModel (val context: Application) : BaseViewModel() {
 
     private var bluetoothService: BluetoothManager? = null
     private var bleManager: MyBleManagerScan? = null

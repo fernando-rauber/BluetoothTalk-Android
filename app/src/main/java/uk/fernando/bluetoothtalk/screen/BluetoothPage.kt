@@ -22,11 +22,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.getViewModel
 import uk.fernando.bluetoothtalk.R
 import uk.fernando.bluetoothtalk.components.CustomButton
 import uk.fernando.bluetoothtalk.components.CustomSwitch
@@ -42,7 +42,7 @@ import uk.fernando.bluetoothtalk.viewmodel.BluetoothViewModel
 
 @ExperimentalMaterialApi
 @Composable
-fun BluetoothPage(navController: NavController = NavController(LocalContext.current), viewModel: BluetoothViewModel = hiltViewModel()) {
+fun BluetoothPage(navController: NavController = NavController(LocalContext.current), viewModel: BluetoothViewModel = getViewModel()) {
     var gpsDialog by remember { mutableStateOf(false) }
     val coroutine = rememberCoroutineScope()
 

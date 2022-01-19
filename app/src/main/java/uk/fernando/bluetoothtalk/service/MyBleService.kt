@@ -9,16 +9,12 @@ import android.os.Binder
 import android.os.IBinder
 import androidx.core.content.getSystemService
 import androidx.lifecycle.LifecycleService
-import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import uk.fernando.bluetoothtalk.service.ble.BleScanState
 import uk.fernando.bluetoothtalk.service.ble.ChatServer
 import uk.fernando.bluetoothtalk.service.ble.MyBleManagerScan
 import java.util.*
 
-
-@AndroidEntryPoint
 class MyBleService : LifecycleService() {
 
     private val binder = BleBinder()

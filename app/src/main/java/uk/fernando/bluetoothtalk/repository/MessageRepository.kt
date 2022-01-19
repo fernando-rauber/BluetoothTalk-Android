@@ -8,9 +8,8 @@ import uk.fernando.bluetoothtalk.database.entity.MessageEntity
 import uk.fernando.bluetoothtalk.database.entity.ProfileEntity
 import uk.fernando.bluetoothtalk.database.entity.UserEntity
 import uk.fernando.bluetoothtalk.ext.getRandomUUIDString
-import javax.inject.Inject
 
-class MessageRepository @Inject constructor(private val dao: BleDao) {
+class MessageRepository(private val dao: BleDao) {
 
 
     suspend fun insertMessage(message: MessageEntity) = withContext(Dispatchers.IO) {

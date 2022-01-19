@@ -22,11 +22,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.rememberImagePainter
 import coil.transform.CircleCropTransformation
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.getViewModel
 import uk.fernando.bluetoothtalk.R
 import uk.fernando.bluetoothtalk.database.entity.MessageEntity
 import uk.fernando.bluetoothtalk.database.entity.UserEntity
@@ -38,7 +38,7 @@ import uk.fernando.bluetoothtalk.viewmodel.ChatViewModel
 
 @Preview(showBackground = true)
 @Composable
-fun ChatPage(navController: NavController = NavController(LocalContext.current), userAddress: String = "", viewModel: ChatViewModel = hiltViewModel()) {
+fun ChatPage(navController: NavController = NavController(LocalContext.current), userAddress: String = "", viewModel: ChatViewModel = getViewModel()) {
     viewModel.fetchMessages(userAddress)
     val coroutine = rememberCoroutineScope()
     val listState = rememberLazyListState()
