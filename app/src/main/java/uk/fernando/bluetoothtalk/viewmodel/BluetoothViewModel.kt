@@ -43,7 +43,6 @@ class BluetoothViewModel @Inject constructor(val context: BaseApplication, val r
         bleManager = MyBleManagerScan(bluetoothService!!.adapter)
 
         initObservers()
-        initObservers2()
     }
 
     fun enableDisableBle() {
@@ -88,46 +87,6 @@ class BluetoothViewModel @Inject constructor(val context: BaseApplication, val r
             }
         }
     }
-
-    private fun initObservers2() {
-        launchDefault {
-
-            // Device Connection Observer
-            ChatServer.clientConnectionState.collect { state ->
-                state?.let {
-                    when (state) {
-                        is Connecting -> snackBar.value = SnackBarSealed.Success(R.string.connecting, isLongDuration = true)
-                        is Connected -> {
-//                            val bleResponse = BleResponse(type = ResponseType.REQUEST_PROFILE.value)
-//
-//                            delay(2000)
-//                            ChatServer.sendMessage(bleResponse)
-//                            ChatServer.setCurrentChatConnection(state.device)
-
-
-                            snackBar.value = SnackBarSealed.Success(messageText = "Connected to ${state.device.address}")
-                            //TODO send user to
-                        }
-                        is Disconnected -> snackBar.value = SnackBarSealed.Error(R.string.disconnected)
-                        is ConnectionFailed -> snackBar.value = SnackBarSealed.Error(R.string.connection_failed)
-                    }
-                }
-            }
-        }
-    }
-
-//    private fun initObservers3() {
-//        launchDefault {
-//            ChatServer.receivedMessage.collect { response ->
-//                if (response != null && response.type == ResponseType.PROFILE.value) {
-//                    Log.e(TAG, "initObservers3: profile ${response.profile?.userID}")
-//                    val profile = response.profile!!
-//                    repository.insertUser(UserEntity(profile.userID, profile.name, profile.photo))
-//                    navChat.value = profile.userID
-//                }
-//            }
-//        }
-//    }
 
 }
 

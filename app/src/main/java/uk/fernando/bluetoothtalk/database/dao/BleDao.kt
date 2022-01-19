@@ -21,7 +21,7 @@ interface BleDao {
 
 
     //region Message
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert
     fun insert(item: MessageEntity): Long
 
     @Query("SELECT * FROM ${MessageEntity.NAME} WHERE user_id = :userId ORDER BY date ASC")

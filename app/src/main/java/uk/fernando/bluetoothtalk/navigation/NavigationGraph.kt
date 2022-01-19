@@ -1,12 +1,14 @@
 package uk.fernando.bluetoothtalk.navigation
 
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import uk.fernando.bluetoothtalk.navigation.Directions.USER_ADDRESS
-import uk.fernando.bluetoothtalk.screen.*
+import uk.fernando.bluetoothtalk.screen.BluetoothPage
+import uk.fernando.bluetoothtalk.screen.ChatListPage
+import uk.fernando.bluetoothtalk.screen.ChatPage
+import uk.fernando.bluetoothtalk.screen.SettingsPage
 import uk.fernando.bluetoothtalk.screen.permission.LocationPermissionPage
 
 

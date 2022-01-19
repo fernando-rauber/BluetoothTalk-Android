@@ -13,10 +13,11 @@ import uk.fernando.bluetoothtalk.database.dao.BleDao
 import uk.fernando.bluetoothtalk.repository.MessageRepository
 import javax.inject.Singleton
 
-@Module
 @InstallIn(SingletonComponent::class)
+@Module
 object DatabaseModule {
 
+    @Singleton
     @Provides
     fun provideDataBase(@ApplicationContext context: Context): BleDatabase {
         return Room.databaseBuilder(context, BleDatabase::class.java, "blechat.db")
@@ -24,11 +25,13 @@ object DatabaseModule {
             .build()
     }
 
+    @Singleton
     @Provides
     fun reportDAO(db: BleDatabase): BleDao {
         return db.bleDao()
     }
 
+    @Singleton
     @Provides
     fun provideMessageRepository(dao: BleDao) = MessageRepository(dao)
 

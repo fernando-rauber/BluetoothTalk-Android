@@ -181,14 +181,14 @@ fun LocationPermissionPage(navController: NavController = NavController(LocalCon
                 }
             },
             onPositive = {
-                if ((context as Activity).shouldShowRequestPermissionRationale(Manifest.permission.CAMERA)) {
-                    coroutineScope.launch {
-                        sheetState.show()
-                    }
-                } else {
+//                if ((context as Activity).shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) {
+//                    coroutineScope.launch {
+//                        sheetState.show()
+//                    }
+//                } else {
                     activityResult.launch(Manifest.permission.ACCESS_FINE_LOCATION)
                     // not accepted yet
-                }
+//                }
             }
         )
     }

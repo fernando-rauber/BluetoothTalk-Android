@@ -53,7 +53,8 @@ object ChatServer {
     private var gattClientCallback: BluetoothGattCallback? = null
 
     // Properties for current chat device connection
-    private var currentDevice: BluetoothDevice? = null
+    private var clientDevice: BluetoothDevice? = null
+    private var serverDevice: BluetoothDevice? = null
 
     private var gatt: BluetoothGatt? = null
     private var messageCharacteristic: BluetoothGattCharacteristic? = null
@@ -62,6 +63,7 @@ object ChatServer {
     val clientConnectionState = MutableStateFlow<BleConnectionState?>(null)
     val serverConnectionState = MutableStateFlow<BleConnectionState?>(null)
 
+//    private var isRequestingConnection = false
 
     fun startServer(app: Application) {
         bluetoothManager = app.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
@@ -84,10 +86,16 @@ object ChatServer {
     }
 
     fun setCurrentChatConnection(device: BluetoothDevice) {
-        currentDevice = device
+        clientDevice = device
 
         clientConnectionState.tryEmit(BleConnectionState.Connecting)
         connectToChatDevice(device)
+    }
+
+    fun connectToCurrentUser() {
+        Log.e(TAG, "Try to connect to the device that got connected to mine")
+        if (clientDevice == null)
+            setCurrentChatConnection(serverDevice!!)
     }
 
     private fun connectToChatDevice(device: BluetoothDevice) {
@@ -173,15 +181,18 @@ object ChatServer {
     }
 
     private class GattServerCallback : BluetoothGattServerCallback() {
+
         override fun onConnectionStateChange(device: BluetoothDevice, status: Int, newState: Int) {
             super.onConnectionStateChange(device, status, newState)
             val isSuccess = status == BluetoothGatt.GATT_SUCCESS
             val isConnected = newState == BluetoothProfile.STATE_CONNECTED
-            Log.d(TAG, "onConnectionStateChange: Server $device ${device.name} success: $isSuccess connected: $isConnected")
+            Log.e(TAG, "onConnectionStateChange: Server $device ${device.name} mac:${device.address} success: $isSuccess connected: $isConnected")
 
-            if (isSuccess && isConnected) {
-                serverConnectionState.tryEmit(BleConnectionState.Connected(device))
-            } else
+            if (isSuccess && isConnected && clientDevice == null) {
+                Log.e(TAG, "Just can show when get connected without be connected")
+                serverDevice = device
+                clientConnectionState.tryEmit(BleConnectionState.GotConnectedBy(device))
+            } else if (!isSuccess && !isConnected)
                 serverConnectionState.tryEmit(BleConnectionState.Disconnected)
         }
 
@@ -223,13 +234,11 @@ object ChatServer {
                 gatt.requestConnectionPriority(CONNECTION_PRIORITY_HIGH)
                 gatt.requestMtu(400)
 //                gatt.discoverServices()
-            }
-            if (isSuccess && isConnected) {
-                clientConnectionState.tryEmit(BleConnectionState.Connected(currentDevice!!))
+
+                Log.e(TAG, "Client connected to $clientDevice")
+                clientConnectionState.tryEmit(BleConnectionState.Connected(clientDevice!!))
             } else if (!isSuccess && !isConnected)
                 clientConnectionState.tryEmit(BleConnectionState.Disconnected)
-            else
-                clientConnectionState.tryEmit(BleConnectionState.ConnectionFailed)
         }
 
         override fun onMtuChanged(gatt: BluetoothGatt?, mtu: Int, status: Int) {
