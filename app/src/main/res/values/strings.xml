@@ -33,5 +33,6 @@
     <string name="save_changes_action">Save Changes</string>
     <string name="name_placeholder">Name</string>
     <string name="changes_saved">Saved</string>
+    <string name="yesterday">Yesterday</string>
 
 </resources>

@@ -182,7 +182,15 @@ private fun BottomBar(onSendMessage: (String) -> Unit) {
 
 @Preview(showBackground = true)
 @Composable
-private fun ChatDialog(message: MessageEntity = MessageEntity(null, "messag dd3", Date(), false, true, "")) {
+private fun ChatDialog(
+    message: MessageEntity =
+        MessageEntity(
+            null,
+            "messag dd3m",
+            Date(),
+            false, true, ""
+        )
+) {
     Box(
         Modifier
             .fillMaxWidth()
@@ -201,23 +209,23 @@ private fun ChatDialog(message: MessageEntity = MessageEntity(null, "messag dd3"
                 color = if (message.byMe) green else blue,
                 shape = getRoundedCorner(message.byMe)
             ) {
-                Row(verticalAlignment = Alignment.Bottom) {
+                Box {
                     Text(
                         text = message.message,
+                        fontSize = 17.sp,
                         modifier = Modifier
-                            .padding(start = 10.dp)
-                            .padding(vertical = 10.dp)
-                            .weight(1f)
+                            .padding(start = 10.dp, end = 30.dp)
+                            .padding(top = 10.dp, bottom = 17.dp)
                     )
 
                     Text(
                         text = message.date.formatToTime(),
-                        fontSize = 9.sp,
+                        fontSize = 12.sp,
                         color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f),
                         textAlign = TextAlign.End,
                         modifier = Modifier
                             .padding(end = 9.dp, bottom = 5.dp)
-                            .weight(0.15f)
+                            .align(Alignment.BottomEnd)
                     )
                 }
             }

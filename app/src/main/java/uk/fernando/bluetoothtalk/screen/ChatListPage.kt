@@ -21,6 +21,7 @@ import coil.transform.CircleCropTransformation
 import org.koin.androidx.compose.getViewModel
 import uk.fernando.bluetoothtalk.R
 import uk.fernando.bluetoothtalk.database.entity.UserWithMessage
+import uk.fernando.bluetoothtalk.ext.formatToChatDate
 import uk.fernando.bluetoothtalk.ext.noRippleClickable
 import uk.fernando.bluetoothtalk.navigation.Directions
 import uk.fernando.bluetoothtalk.theme.greyDark
@@ -33,7 +34,7 @@ fun ChatListPage(navController: NavController = NavController(LocalContext.curre
     LazyColumn(modifier = Modifier.fillMaxSize()) {
 
         items(viewModel.chatList.value) { user ->
-            UserChat(user = user){
+            UserChat(user = user) {
                 navController.navigate(Directions.chat.name.plus("/${user.user.id}"))
             }
         }
@@ -52,7 +53,7 @@ private fun UserChat(user: UserWithMessage, onClick: () -> Unit = {}) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
 
-         // Image
+        // Image
         Image(
             modifier = Modifier.size(50.dp),
             painter = if (user.user.image.isNullOrEmpty()) painterResource(id = R.drawable.img_no_avatar) else rememberImagePainter(user.user.image, builder = {
@@ -71,21 +72,33 @@ private fun UserChat(user: UserWithMessage, onClick: () -> Unit = {}) {
                 .padding(start = 18.dp, bottom = 10.dp, top = 10.dp)
         ) {
 
-            // Text - User name
-            Text(
-                text = user.user.name,
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
 
-            // Text - Last message
-            if (user.messageList.isNotEmpty())
+                // Text - User name
                 Text(
-                    text = user.messageList.last().message,
+                    text = user.user.name,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 17.sp,
+                    modifier = Modifier.weight(0.9f)
+                )
+
+                // last time message
+                Text(
+                    text = if (user.messageList.isNotEmpty()) user.messageList.last().date.formatToChatDate() else "",
                     fontWeight = FontWeight.Normal,
                     color = greyDark,
                     fontSize = 12.sp,
                 )
+            }
+
+            // Text - Last message
+            Text(
+                text = if (user.messageList.isNotEmpty()) user.messageList.last().message else "",
+                fontWeight = FontWeight.Normal,
+                color = greyDark,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(top = 5.dp)
+            )
         }
     }
 
