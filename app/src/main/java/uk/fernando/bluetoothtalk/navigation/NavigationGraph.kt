@@ -1,5 +1,6 @@
 package uk.fernando.bluetoothtalk.navigation
 
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
@@ -12,6 +13,7 @@ import uk.fernando.bluetoothtalk.screen.SettingsPage
 import uk.fernando.bluetoothtalk.screen.permission.LocationPermissionPage
 
 
+@ExperimentalAnimationApi
 @ExperimentalMaterialApi
 fun NavGraphBuilder.buildGraph(navController: NavController) {
     composable(Directions.splash.name) {

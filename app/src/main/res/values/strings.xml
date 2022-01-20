@@ -35,5 +35,6 @@
     <string name="changes_saved">Saved</string>
     <string name="yesterday">Yesterday</string>
     <string name="close">Close</string>
+    <string name="delete_action">Delete</string>
 
 </resources>

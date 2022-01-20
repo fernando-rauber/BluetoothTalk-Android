@@ -41,4 +41,10 @@ class UserRepository(private val dao: BleDao) {
         dao.getAllUserWithMessage()
     }
 
+    suspend fun deleteUserAndMessages(user: UserEntity) {
+        withContext(Dispatchers.IO) {
+            dao.deleteMessagesByUser(user.id)
+            dao.delete(user)
+        }
+    }
 }

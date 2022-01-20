@@ -14,6 +14,9 @@ interface BleDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(item: UserEntity)
 
+    @Delete
+    fun delete(item: UserEntity)
+
     @Query("SELECT * FROM ${UserEntity.NAME} WHERE id = :id")
     fun getUserById(id: String): UserEntity
 
@@ -33,6 +36,9 @@ interface BleDao {
 
     @Query("UPDATE ${MessageEntity.NAME} SET sent = 1 WHERE id =:id")
     fun updateMessageToSent(id: Long)
+
+    @Query("DELETE FROM ${MessageEntity.NAME} WHERE user_id =:id")
+    fun deleteMessagesByUser(id: String)
 
     //endregion
 
