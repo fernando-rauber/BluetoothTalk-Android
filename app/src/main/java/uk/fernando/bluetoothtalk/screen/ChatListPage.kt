@@ -42,54 +42,62 @@ import uk.fernando.bluetoothtalk.viewmodel.ChatListViewModel
 @Composable
 fun ChatListPage(navController: NavController = NavController(LocalContext.current), viewModel: ChatListViewModel = getViewModel()) {
 
-
     //No Messages Yet
-
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(top = 20.dp)
-    ) {
-
-        items(viewModel.chatList.value, { listItem: UserWithMessage -> listItem.user.id }) { user ->
-            AnimatedSwipeDelete(
-                item = user,
-                background = {
-
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(horizontal = 15.dp, vertical = 7.dp)
-                            .background(
-                                color = red,
-                                shape = MaterialTheme.shapes.medium.copy(CornerSize(15.dp))
-                            )
-
-                    ) {
-
-                        Text(
-                            text = stringResource(id = R.string.delete_action),
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White,
-                            fontSize = 14.sp,
-                            modifier = Modifier
-                                .align(Alignment.CenterEnd)
-                                .padding(end = 15.dp)
-                        )
-                    }
-                },
-                content = {
-                    UserChat(user = user) {
-                        navController.navigate(Directions.chat.name.plus("/${user.user.id}"))
-                    }
-                },
-                onDismiss = { itemDeleted ->
-                    viewModel.deleteChat(itemDeleted)
-                }
+    if (viewModel.chatList.value.isEmpty()) {
+        Box(Modifier.fillMaxSize()) {
+            Text(
+                text = stringResource(id = R.string.no_chat),
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+                modifier = Modifier.align(Alignment.Center)
             )
-
         }
-    }
+    } else
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = 20.dp)
+        ) {
+
+            items(viewModel.chatList.value, { listItem: UserWithMessage -> listItem.user.id }) { user ->
+                AnimatedSwipeDelete(
+                    item = user,
+                    background = {
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 15.dp, vertical = 7.dp)
+                                .background(
+                                    color = red,
+                                    shape = MaterialTheme.shapes.medium.copy(CornerSize(15.dp))
+                                )
+
+                        ) {
+
+                            Text(
+                                text = stringResource(id = R.string.delete_action),
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                                fontSize = 14.sp,
+                                modifier = Modifier
+                                    .align(Alignment.CenterEnd)
+                                    .padding(end = 15.dp)
+                            )
+                        }
+                    },
+                    content = {
+                        UserChat(user = user) {
+                            navController.navigate(Directions.chat.name.plus("/${user.user.id}"))
+                        }
+                    },
+                    onDismiss = { itemDeleted ->
+                        viewModel.deleteChat(itemDeleted)
+                    }
+                )
+
+            }
+        }
 }
 
 @Composable
