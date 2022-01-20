@@ -53,8 +53,8 @@ object ChatServer {
     private var gattClientCallback: BluetoothGattCallback? = null
 
     // Properties for current chat device connection
-    private var clientDevice: BluetoothDevice? = null
-    private var serverDevice: BluetoothDevice? = null
+    var clientDevice: BluetoothDevice? = null
+    var serverDevice: BluetoothDevice? = null
 
     private var gatt: BluetoothGatt? = null
     private var messageCharacteristic: BluetoothGattCharacteristic? = null

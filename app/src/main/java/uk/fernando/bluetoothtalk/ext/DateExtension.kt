@@ -21,7 +21,7 @@ fun Date.formatToChatDate(): String {
     return if (this.after(getCurrentDay()))
         this.formatToTime()
     else if (this.before(getCurrentDay()) && this.after(getYesterdayDate()))
-        Resources.getSystem().getString(R.string.yesterday)
+        "Yesterday"
     else
         this.formatToDate()
 }

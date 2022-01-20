@@ -4,16 +4,16 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Scaffold
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -27,6 +27,7 @@ import uk.fernando.bluetoothtalk.components.BottomNavigationBar
 import uk.fernando.bluetoothtalk.database.entity.MessageEntity
 import uk.fernando.bluetoothtalk.database.entity.UserEntity
 import uk.fernando.bluetoothtalk.ext.TAG
+import uk.fernando.bluetoothtalk.ext.noRippleClickable
 import uk.fernando.bluetoothtalk.navigation.Directions
 import uk.fernando.bluetoothtalk.navigation.buildGraph
 import uk.fernando.bluetoothtalk.repository.MessageRepository
@@ -41,6 +42,8 @@ import uk.fernando.bluetoothtalk.theme.MyTheme
 
 @ExperimentalMaterialApi
 class MainActivity : ComponentActivity() {
+
+    var profileId = ""
 
 //    private val serviceObserver = ServiceBinderLifecycleObserver(this)
 
@@ -62,26 +65,46 @@ class MainActivity : ComponentActivity() {
 
             val controller = rememberNavController()
             val navBackStackEntry by controller.currentBackStackEntryAsState()
-            val statusDialog by remember { mutableStateOf(mutableListOf<String>()) }
+            val statusDialog by remember { mutableStateOf(mutableListOf<BleConnectionState>()) }
             var showDialog by remember { mutableStateOf(0) }
 
-            messagesObserver(userRep, msgRep) {
-                statusDialog.clear()
-                showDialog = 0
 
-                controller.navigate(it)
-            }
+            messagesObserver(
+                userRep = userRep,
+                msgRep = msgRep,
+                navigate = {
+                    statusDialog.clear()
+                    showDialog = 0
 
-            clientObserver(userRep) {
-                Log.e(TAG, "onCreate1: $it")
-                showDialog++
-                statusDialog.add(it)
-            }
-            serverObserver {
-                Log.e(TAG, "onCreate2: $it")
-                showDialog++
-                statusDialog.add(it)
-            }
+                    controller.navigate(it)
+                }
+            )
+
+            clientObserver(
+                userRep = userRep,
+                navigate = {
+                    statusDialog.clear()
+                    showDialog = 0
+
+                    controller.navigate(it)
+                },
+                onStatusChange = {
+                    showDialog++
+                    statusDialog.add(it)
+                }
+            )
+
+//            serverObserver {
+//                Log.e(TAG, "onCreate2: $it")
+//                showDialog++
+//                statusDialog.add(it)
+//            }
+
+//            statusDialog.add(BleConnectionState.Connecting)
+//            statusDialog.add(BleConnectionState.Connecting)
+//            statusDialog.add(BleConnectionState.Disconnected)
+//
+//            showDialog++
 
             MyTheme {
 
@@ -103,10 +126,12 @@ class MainActivity : ComponentActivity() {
                         }
 
                         if (showDialog > 0) {
-                            BluetoothStatusDialog(Modifier.align(Alignment.Center), statusDialog)
+                            ConnectionStatusDialog(statusDialog){
+                                statusDialog.clear()
+                                showDialog = 0
+                            }
                         }
                     }
-
                 }
             }
         }
@@ -122,88 +147,55 @@ class MainActivity : ComponentActivity() {
                         ResponseType.MESSAGE_RESPONSE.value -> msgRep.updateMessageToSent(it.messageResponse!!.messageID)
 
                         ResponseType.PROFILE.value -> {
-                            Log.e(TAG, "PROFILE received: ${response.profile?.userID}")
                             val profile = response.profile!!
                             userRep.insertUser(UserEntity(profile.userID, profile.name, profile.photo))
-                            Log.e(TAG, "PROFILE added")
                             ChatServer.connectToCurrentUser()
 
-                            navigate(Directions.chat.name.plus("/${profile.userID}"))
-                        }
+                            profileId = profile.userID
 
-//                        ResponseType.REQUEST_PROFILE.value -> {
-//                            Log.e(TAG, "REQUEST_PROFILE: profile")
-//                            val profile = repository.getProfile()
-//                            val profileModel = ProfileModel(userID = profile.id, name = profile.name)
-//                            val bleResponse = BleResponse(type = ResponseType.PROFILE.value, profile = profileModel)
-//                            delay(200)
-//                            ChatServer.sendMessage(bleResponse)
-//                            Log.e(TAG, "REQUEST_PROFILE: sent")
-//
-//                            //navChat.value = profile.userID
-//                        }
+                            if (ChatServer.clientDevice != null)
+                                navigate(Directions.chat.name.plus("/${profile.userID}"))
+                        }
                     }
                 }
             }
         }
     }
 
-
-    private fun clientObserver(userRep: UserRepository, onStatusChange: (String) -> Unit) {
+    private fun clientObserver(userRep: UserRepository, navigate: (String) -> Unit, onStatusChange: (BleConnectionState) -> Unit) {
         lifecycleScope.launch {
-
             // Device Connection Observer
             ChatServer.clientConnectionState.collect { state ->
                 state?.let {
-                    when (state) {
-                        is BleConnectionState.Connecting -> onStatusChange("connecting")
-                        is BleConnectionState.Connected -> {
-                            onStatusChange("connected to ${state.device}")
-                            onStatusChange("Requesting device ${state.device}'s connection")
+                    onStatusChange(it)
 
-                            Log.e(TAG, "REQUEST_PROFILE: profile")
-                            val profile = userRep.getProfile()
-                            val profileModel = ProfileModel(userID = profile.id, name = profile.name)
-                            val bleResponse = BleResponse(type = ResponseType.PROFILE.value, profile = profileModel)
-                            delay(1000)
-                            ChatServer.sendMessage(bleResponse)
-                            Log.e(TAG, "REQUEST_PROFILE: sent")
+                    if (state is BleConnectionState.Connected) {
+                        val profile = userRep.getProfile()
+                        val profileModel = ProfileModel(userID = profile.id, name = profile.name)
+                        val bleResponse = BleResponse(type = ResponseType.PROFILE.value, profile = profileModel)
+                        delay(1500)
+                        ChatServer.sendMessage(bleResponse)
 
-                        }
-                        is BleConnectionState.GotConnectedBy -> onStatusChange("got connected by: ${state.device}")
-                        is BleConnectionState.Disconnected -> onStatusChange("disconnected")
-                        is BleConnectionState.ConnectionEstablished -> onStatusChange("Connection Established")
+                        if (ChatServer.serverDevice != null)
+                            navigate(Directions.chat.name.plus("/${profileId}"))
                     }
                 }
             }
         }
     }
 
-    private fun serverObserver(onStatusChange: (String) -> Unit) {
-        lifecycleScope.launch {
-
-            // Device Connection Observer
-            ChatServer.serverConnectionState.collect { state ->
-                state?.let {
-                    when (state) {
-                        is BleConnectionState.Connecting -> onStatusChange("**Server connecting")
-                        is BleConnectionState.Connected -> onStatusChange("**Server connected")
-                        is BleConnectionState.Disconnected -> onStatusChange("**Server disconnected")
-                        else -> {}
-                    }
-                }
-            }
-        }
-    }
-
-//    private fun initObservers3() {
-//        launchDefault {
-//            ChatServer.receivedMessage.collect { response ->
-//                if (response != null && response.type == ResponseType.PROFILE.value) {
-//                    Log.e(TAG, "initObservers3: profile ${response.profile?.userID}")
-//                    val profile = response.profile!!
-//                    repository.insertUser(UserEntity(profile.userID, profile.name, profile.photo))
-//                    navChat.value = profile.userID
+//    private fun serverObserver(onStatusChange: (String) -> Unit) {
+//        lifecycleScope.launch {
+//
+//            // Device Connection Observer
+//            ChatServer.serverConnectionState.collect { state ->
+//                state?.let {
+//                    when (state) {
+//                        is BleConnectionState.Connecting -> onStatusChange("**Server connecting")
+//                        is BleConnectionState.Connected -> onStatusChange("**Server connected")
+//                        is BleConnectionState.Disconnected -> onStatusChange("**Server disconnected")
+//                        else -> {}
+//                    }
 //                }
 //            }
 //        }
@@ -218,5 +210,17 @@ class MainActivity : ComponentActivity() {
 //
 //        // Send response says that received message
 //        ChatServer.sendMessage(bleResponse)
+    }
+}
+
+@Composable
+private fun ConnectionStatusDialog(statusDialog: List<BleConnectionState>, onDisconnect: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .noRippleClickable { }
+            .background(Color.Black.copy(alpha = 0.6f))
+    ) {
+        BluetoothStatusDialog(Modifier.align(Alignment.Center), statusDialog, onDisconnect)
     }
 }
