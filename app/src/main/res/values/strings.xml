@@ -36,5 +36,7 @@
     <string name="yesterday">Yesterday</string>
     <string name="close">Close</string>
     <string name="delete_action">Delete</string>
+    <string name="no_chat">No messages yet</string>
+    <string name="device_disconnected">Device Disconnected</string>
 
 </resources>

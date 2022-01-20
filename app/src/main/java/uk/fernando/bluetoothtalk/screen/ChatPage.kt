@@ -1,6 +1,5 @@
 package uk.fernando.bluetoothtalk.screen
 
-import android.text.format.DateUtils
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -35,10 +34,8 @@ import uk.fernando.bluetoothtalk.database.entity.MessageEntity
 import uk.fernando.bluetoothtalk.database.entity.UserEntity
 import uk.fernando.bluetoothtalk.ext.formatToTime
 import uk.fernando.bluetoothtalk.ext.isSameDay
-import uk.fernando.bluetoothtalk.theme.blue
-import uk.fernando.bluetoothtalk.theme.green
-import uk.fernando.bluetoothtalk.theme.greyDark
-import uk.fernando.bluetoothtalk.theme.greyLight2
+import uk.fernando.bluetoothtalk.ext.noRippleClickable
+import uk.fernando.bluetoothtalk.theme.*
 import uk.fernando.bluetoothtalk.viewmodel.ChatViewModel
 import java.util.*
 
@@ -55,6 +52,7 @@ fun ChatPage(navController: NavController = NavController(LocalContext.current),
             onBackClick = { navController.popBackStack() }
         )
 
+        // Messages
         LazyColumn(
             state = listState,
             modifier = Modifier.weight(0.9f)
@@ -76,7 +74,10 @@ fun ChatPage(navController: NavController = NavController(LocalContext.current),
             }
         }
 
-        BottomBar(onSendMessage = {
+
+        BottomBar(
+            isDisconnected = viewModel.isDisconnected.value,
+            onSendMessage = {
             coroutine.launch {
                 viewModel.sendMessage(it)
             }
@@ -131,7 +132,7 @@ private fun TopBar(user: UserEntity?, onBackClick: () -> Unit) {
 }
 
 @Composable
-private fun BottomBar(onSendMessage: (String) -> Unit) {
+private fun BottomBar(isDisconnected: Boolean, onSendMessage: (String) -> Unit = {}) {
 
     var message by remember { mutableStateOf("") }
 
@@ -140,52 +141,72 @@ private fun BottomBar(onSendMessage: (String) -> Unit) {
         elevation = 4.dp
     ) {
 
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp)
-                .padding(start = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+        Box {
 
-            TextField(
-                value = message,
-                modifier = Modifier
-                    .weight(0.9f)
-                    .defaultMinSize(minHeight = 40.dp)
-                    .background(greyLight2.copy(0.3f), shape = RoundedCornerShape(20)),
-                onValueChange = { message = it },
-                colors = TextFieldDefaults.outlinedTextFieldColors(
-                    textColor = Color.Black,
-                    backgroundColor = Color.Transparent,
-                    disabledBorderColor = Color.Transparent,
-                    unfocusedBorderColor = Color.Transparent,
-                    focusedBorderColor = Color.Transparent,
-                    cursorColor = MaterialTheme.colors.primary,
-                    placeholderColor = greyDark
-                ),
-                placeholder = {
-                    Text(
-                        text = stringResource(id = R.string.message),
-                        style = TextStyle.Default.copy(fontSize = 16.sp, fontWeight = FontWeight.Normal)
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
+                    .padding(start = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+
+                TextField(
+                    value = message,
+                    modifier = Modifier
+                        .weight(0.9f)
+                        .defaultMinSize(minHeight = 40.dp)
+                        .background(greyLight2.copy(0.3f), shape = RoundedCornerShape(20)),
+                    onValueChange = { message = it },
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        textColor = Color.Black,
+                        backgroundColor = Color.Transparent,
+                        disabledBorderColor = Color.Transparent,
+                        unfocusedBorderColor = Color.Transparent,
+                        focusedBorderColor = Color.Transparent,
+                        cursorColor = MaterialTheme.colors.primary,
+                        placeholderColor = greyDark
+                    ),
+                    placeholder = {
+                        Text(
+                            text = stringResource(id = R.string.message),
+                            style = TextStyle.Default.copy(fontSize = 16.sp, fontWeight = FontWeight.Normal)
+                        )
+                    }
+                )
+
+                // Send Button
+                IconButton(
+                    onClick = {
+                        onSendMessage(message)
+                        message = ""
+                    },
+                    enabled = message.isNotEmpty()
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_send),
+                        contentDescription = null,
+                        tint = if (message.isNotEmpty()) blue else greyDark
                     )
                 }
-            )
-
-            // Send Button
-            IconButton(
-                onClick = {
-                    onSendMessage(message)
-                    message = ""
-                },
-                enabled = message.isNotEmpty()
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_send),
-                    contentDescription = null,
-                    tint = if (message.isNotEmpty()) blue else greyDark
-                )
             }
+
+            if (isDisconnected)
+                Box(modifier = Modifier
+                    .matchParentSize()
+                    .noRippleClickable { }
+                    .background(Color.Black.copy(alpha = 0.7f))) {
+
+                    Text(
+                        text = stringResource(id = R.string.device_disconnected),
+                        fontWeight = FontWeight.Bold,
+                        color = red,
+                        fontSize = 18.sp,
+                        modifier = Modifier
+                            .padding(vertical = 10.dp, horizontal = 30.dp)
+                            .align(Alignment.Center)
+                    )
+                }
         }
     }
 }
