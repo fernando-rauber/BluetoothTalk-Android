@@ -41,3 +41,15 @@ private fun getYesterdayDate(): Date {
     calendar[Calendar.DAY_OF_MONTH] = calendar[Calendar.DAY_OF_MONTH] - 1
     return calendar.time
 }
+
+fun Date.isSameDay(date: Date): Boolean {
+    val firstDay = Calendar.getInstance()
+    firstDay.time = this
+
+    val secondDay = Calendar.getInstance()
+    secondDay.time = date
+
+    return (firstDay.get(Calendar.ERA) == secondDay.get(Calendar.ERA) &&
+            firstDay.get(Calendar.YEAR) == secondDay.get(Calendar.YEAR) &&
+            firstDay.get(Calendar.DAY_OF_YEAR) == secondDay.get(Calendar.DAY_OF_YEAR))
+}

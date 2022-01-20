@@ -1,5 +1,6 @@
 package uk.fernando.bluetoothtalk.screen
 
+import android.text.format.DateUtils
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -29,9 +30,11 @@ import coil.transform.CircleCropTransformation
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.getViewModel
 import uk.fernando.bluetoothtalk.R
+import uk.fernando.bluetoothtalk.components.DateDivider
 import uk.fernando.bluetoothtalk.database.entity.MessageEntity
 import uk.fernando.bluetoothtalk.database.entity.UserEntity
 import uk.fernando.bluetoothtalk.ext.formatToTime
+import uk.fernando.bluetoothtalk.ext.isSameDay
 import uk.fernando.bluetoothtalk.theme.blue
 import uk.fernando.bluetoothtalk.theme.green
 import uk.fernando.bluetoothtalk.theme.greyDark
@@ -56,7 +59,14 @@ fun ChatPage(navController: NavController = NavController(LocalContext.current),
             state = listState,
             modifier = Modifier.weight(0.9f)
         ) {
+            var lastDate = Date()
+
             items(viewModel.messageList.value) { message ->
+                if (!message.date.isSameDay(lastDate)) {
+                    DateDivider(lastDate)
+                    lastDate = message.date
+                }
+
                 ChatDialog(message)
             }
 
@@ -182,15 +192,7 @@ private fun BottomBar(onSendMessage: (String) -> Unit) {
 
 @Preview(showBackground = true)
 @Composable
-private fun ChatDialog(
-    message: MessageEntity =
-        MessageEntity(
-            null,
-            "messag dd3m",
-            Date(),
-            false, true, ""
-        )
-) {
+private fun ChatDialog(message: MessageEntity = MessageEntity(null, "messag dd3m", Date(), false, true, "")) {
     Box(
         Modifier
             .fillMaxWidth()
@@ -215,7 +217,7 @@ private fun ChatDialog(
                         fontSize = 17.sp,
                         modifier = Modifier
                             .padding(start = 10.dp, end = 30.dp)
-                            .padding(top = 10.dp, bottom = 17.dp)
+                            .padding(top = 10.dp, bottom = 20.dp)
                     )
 
                     Text(
