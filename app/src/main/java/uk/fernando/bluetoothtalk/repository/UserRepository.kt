@@ -27,7 +27,7 @@ class UserRepository(private val dao: BleDao) {
         if (profile != null)
             profile
         else {
-            val newProfile = ProfileEntity(getRandomUUIDString(), Build.MODEL)
+            val newProfile = ProfileEntity(getRandomUUIDString(), Build.MODEL.ifEmpty { "No Name" })
             dao.insert(newProfile)
             newProfile
         }

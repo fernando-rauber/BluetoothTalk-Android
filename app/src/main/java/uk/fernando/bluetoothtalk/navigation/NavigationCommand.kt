@@ -55,6 +55,13 @@ object Directions {
             get() = emptyList()
     }
 
+    val bluetoothPermission = object : NavigationCommand {
+        override val name: String
+            get() = "bluetooth_permission"
+        override val arguments: List<NamedNavArgument>
+            get() = emptyList()
+    }
+
     const val USER_ADDRESS = "user_address"
 }
 

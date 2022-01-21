@@ -5,14 +5,17 @@ import androidx.compose.material.ExperimentalMaterialApi
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
+import coil.annotation.ExperimentalCoilApi
 import uk.fernando.bluetoothtalk.navigation.Directions.USER_ADDRESS
 import uk.fernando.bluetoothtalk.screen.BluetoothPage
 import uk.fernando.bluetoothtalk.screen.ChatListPage
 import uk.fernando.bluetoothtalk.screen.ChatPage
 import uk.fernando.bluetoothtalk.screen.SettingsPage
+import uk.fernando.bluetoothtalk.screen.permission.BluetoothPermissionPage
 import uk.fernando.bluetoothtalk.screen.permission.LocationPermissionPage
 
 
+@ExperimentalCoilApi
 @ExperimentalAnimationApi
 @ExperimentalMaterialApi
 fun NavGraphBuilder.buildGraph(navController: NavController) {
@@ -37,6 +40,9 @@ fun NavGraphBuilder.buildGraph(navController: NavController) {
     }
     composable(Directions.locationPermission.name) {
         LocationPermissionPage(navController)
+    }
+    composable(Directions.bluetoothPermission.name) {
+        BluetoothPermissionPage(navController)
     }
 }
 

@@ -38,5 +38,12 @@
     <string name="delete_action">Delete</string>
     <string name="no_chat">No messages yet</string>
     <string name="device_disconnected">Device Disconnected</string>
+    <string name="permission_granted">Granted</string>
+    <string name="permission_no_granted">Not Granted</string>
+    <string name="permission_advertise">\'Bluetooth Advertise\' makes the device discoverable to other Bluetooth devices.</string>
+    <string name="permission_scan">\'Bluetooth Scan\' allows to look for Bluetooth devices.</string>
+    <string name="permission_connect">\'Bluetooth Connect\' allows the device to connect to others device.</string>
+    <string name="permission_priming_bluetooth_title">" would like access to your bluetooth."</string>
+    <string name="permission_denied_bluetooth_message"><![CDATA[We won’t be able to work properly until you go to your <font color=\"#00A9E6\">device settings</font> and give us <font color=\"#00A9E6\">permission</font> to connect to your <font color=\"#00A9E6\">bluetooth</font>.]]></string>
 
 </resources>

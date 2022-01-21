@@ -65,7 +65,8 @@ object ChatServer {
 
 //    private var isRequestingConnection = false
 
-    fun startServer(app: Application) {
+    fun startServer(app: Context) {
+        Log.e("****************************", "startServer: ", )
         bluetoothManager = app.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
         if (adapter.isEnabled) {
             setupGattServer(app)
@@ -77,7 +78,7 @@ object ChatServer {
         stopAdvertising()
     }
 
-    private fun setupGattServer(app: Application) {
+    private fun setupGattServer(app: Context) {
         gattServerCallback = GattServerCallback()
 
         gattServer = bluetoothManager.openGattServer(app, gattServerCallback).apply {

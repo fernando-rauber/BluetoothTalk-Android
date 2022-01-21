@@ -15,10 +15,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import coil.annotation.ExperimentalCoilApi
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
@@ -28,6 +31,8 @@ import uk.fernando.bluetoothtalk.components.BottomNavigationBar
 import uk.fernando.bluetoothtalk.database.entity.MessageEntity
 import uk.fernando.bluetoothtalk.database.entity.UserEntity
 import uk.fernando.bluetoothtalk.ext.TAG
+import uk.fernando.bluetoothtalk.ext.checkBluetoothPermission
+import uk.fernando.bluetoothtalk.ext.checkLocationPermission
 import uk.fernando.bluetoothtalk.ext.noRippleClickable
 import uk.fernando.bluetoothtalk.navigation.Directions
 import uk.fernando.bluetoothtalk.navigation.buildGraph
@@ -41,6 +46,7 @@ import uk.fernando.bluetoothtalk.service.model.ProfileModel
 import uk.fernando.bluetoothtalk.service.model.ResponseType
 import uk.fernando.bluetoothtalk.theme.MyTheme
 
+@ExperimentalAnimationApi
 @ExperimentalMaterialApi
 class MainActivity : ComponentActivity() {
 
@@ -52,11 +58,10 @@ class MainActivity : ComponentActivity() {
 //        lifecycle.addObserver(serviceObserver)
 //    }
 
-    @ExperimentalAnimationApi
+    @ExperimentalCoilApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        ChatServer.startServer(application)
 
 
         setContent {
@@ -69,7 +74,10 @@ class MainActivity : ComponentActivity() {
             val navBackStackEntry by controller.currentBackStackEntryAsState()
             val statusDialog by remember { mutableStateOf(mutableListOf<BleConnectionState>()) }
             var showDialog by remember { mutableStateOf(0) }
+            val context = LocalContext.current
 
+            // Start Discovery
+            context.checkBluetoothPermission(onGranted = { ChatServer.startServer(application) }, {})
 
             messagesObserver(
                 userRep = userRep,
@@ -95,12 +103,6 @@ class MainActivity : ComponentActivity() {
                     statusDialog.add(it)
                 }
             )
-
-//            serverObserver {
-//                Log.e(TAG, "onCreate2: $it")
-//                showDialog++
-//                statusDialog.add(it)
-//            }
 
 //            statusDialog.add(BleConnectionState.Connecting)
 //            statusDialog.add(BleConnectionState.Connecting)
@@ -128,7 +130,7 @@ class MainActivity : ComponentActivity() {
                         }
 
                         if (showDialog > 0) {
-                            ConnectionStatusDialog(statusDialog){
+                            ConnectionStatusDialog(statusDialog) {
                                 statusDialog.clear()
                                 showDialog = 0
                             }
@@ -140,7 +142,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun messagesObserver(userRep: UserRepository, msgRep: MessageRepository, navigate: (String) -> Unit) {
-        lifecycleScope.launch {
+        lifecycleScope.launch(Dispatchers.IO) {
             ChatServer.receivedMessage.collect { response ->
                 response?.let {
                     when (it.type) {
@@ -165,7 +167,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun clientObserver(userRep: UserRepository, navigate: (String) -> Unit, onStatusChange: (BleConnectionState) -> Unit) {
-        lifecycleScope.launch {
+        lifecycleScope.launch(Dispatchers.IO) {
             // Device Connection Observer
             ChatServer.clientConnectionState.collect { state ->
                 state?.let {
@@ -185,23 +187,6 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-
-//    private fun serverObserver(onStatusChange: (String) -> Unit) {
-//        lifecycleScope.launch {
-//
-//            // Device Connection Observer
-//            ChatServer.serverConnectionState.collect { state ->
-//                state?.let {
-//                    when (state) {
-//                        is BleConnectionState.Connecting -> onStatusChange("**Server connecting")
-//                        is BleConnectionState.Connected -> onStatusChange("**Server connected")
-//                        is BleConnectionState.Disconnected -> onStatusChange("**Server disconnected")
-//                        else -> {}
-//                    }
-//                }
-//            }
-//        }
-//    }
 
     private suspend fun insertReceivedMessage(msgRep: MessageRepository, message: MessageModel) {
         Log.e(TAG, " New message: \"${message.message}\"")
